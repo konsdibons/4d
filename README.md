@@ -136,3 +136,15 @@ In all projects, CTF can be determined for each frame using CTFFIND4 or for the 
 
 > GCTF: http://www.mrc-lmb.cam.ac.uk/kzhang/Gctf
 
+### EMAN2
+
+EMAN2 is a great package with lots of tools available. EMAN2 is easy to install and is available for MacOS and Linux on their website: http://blake.bcm.edu/emanwiki/EMAN2
+
+If you want to use the EMAN2 python (that is python 2.7), then you can link that python in the 4d Preferences dialogue, on MacOS for example as /Applications/EMAN2/bin/python2.7 (or, where-ever you installed EMAN2).
+
+If you compile 4d, make sure that the build_all script does not accidentally use the EMAN2 version of qmake. You can test this by typing in a terminal **which qmake**, or **qmake --version**, to see, which qmake shows up first in your path. If the EMAN2 qmake is taken first, you might want to rename that to a different qmake name, such as “qmake-4.8.7”.
+
+### IMOD
+We use many command line utilities present in IMOD. It can be downloaded from the website: http://bio3d.colorado.edu/imod/
+
+
