@@ -29,7 +29,7 @@ On OSX, you might have to do
 > cd /opt/homebrew/bin ; \ln -s g++-14 g++ ; \ln -s gcc-14 gcc
 
 ### libfftw3
-Focus requires fftw version 3.0.0 or later. The package is called libfftw3-dev on Ubuntu, but on Fedora you have to install fftw-devel and fftw-libs. You can install this famous library via the package manager or directly from http://www.fftw.org. In such a case use the following commands to compile FFTW:
+This program requires fftw version 3.0.0 or later. The package is called libfftw3-dev on Ubuntu, but on Fedora you have to install fftw-devel and fftw-libs. You can install this famous library via the package manager or directly from http://www.fftw.org. In such a case use the following commands to compile FFTW:
 
 > ./configure --enable-shared --enable-threads;
 > make;
