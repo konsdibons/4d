@@ -64,13 +64,8 @@ Once everything is set up, CMAKE will automatically find the required paths and 
 
 Upon building, 4d creates a directory “build”, in which the configuration and built files are placed. If compilation fails due to missing or wrong dependencies, and you add those dependencies later, then don't forget to remove the “build” directory before trying agaom to “./build_all”. Otherwise, the old configuration files in the “build” directory will still be present and steer the compilation into the wrong direction.
 
-## Setting up external software tools
-
-4d supports a lot of image processing tasks in cryo-EM. To carry out many of these tasks, we depend on the great free software developed by the community. Some of these are essential for the functioning of Focus and others are optional. The required packages also depend on the technique you use for reconstruction. Here we list all the packages categorised as required and optional.
-
-### Essential
-
-The softwares in this category are compulsory and MUST be installed independent of anything.
+## The following external software tools are essential
+The softwares in this category are required for the correct operation of 4d.
 
 ### (t)CSH
 
@@ -119,6 +114,9 @@ Or to install those in python2.7:
 ### NumExpr
 For accelerating some heavy calculations in Python scripts, 4d uses the NumExpr evaluator. You can install numexpr in your Python environment with the following pip command:
 > pip install numexpr
+
+## The following external software tools are optional
+The following softwares are helpful for specific tasks. You need to install them, if you want to make use of them in your scripts.
 
 ### Software for drift correction
 Drift correction can be done using MotionCor2. In case you require to do the drift correction using one of these software, please install the required software using the links below:
