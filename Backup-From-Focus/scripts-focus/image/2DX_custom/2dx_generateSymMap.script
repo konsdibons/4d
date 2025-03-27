@@ -1,0 +1,524 @@
+#!/bin/tcsh -ef
+####
+#
+#############################################################################
+#                                                                           #
+# Title: Generate SymMap                                                    #
+#                                                                           #
+# 2dx.org, GNU Plublic License.                                             #
+#                                                                           #
+# Created..........: 02/20/2006                                             #
+# Last Modification: 09/20/2006                                             #
+# Author...........: 2dx.org                                                #
+#                                                                           #
+#############################################################################
+#
+# SORTORDER: 50
+#
+# MANUAL: This script makes use of MRC and CCP4 commands to generate the final projection map.
+#
+# MANUAL: It prints a table of phase residuals during the symmetrization, as calculated by AVGAMPHS.<br>
+#
+# MANUAL: <b>Attention</b> this table is only valid and calculated for values along the Z=0 plane in Fourier space, i.e. the non-tilted values within the z-window of 1/2*ALAT.<br> A tilted image may therefore not show many entries in the table, simply because these values are outside of the zMinMax range used here.
+#
+# MANUAL: A big <I><U>thank you</U></I> goes to Vinzenz Unger for debugging this script and providing most of the algorithm and usage here, and to Per Bullough, who gave us essential information and help in handling symmetries and systematic absences between MRC and CCP4 worlds.
+#
+# RESET: show_hkl = "n"
+# RESET: show_phares = "n"
+# RESET: show_PSF = "n"
+#
+# DISPLAY: SYN_Unbending
+# DISPLAY: ML_doit
+# DiSPLAY: ML_use_for_merging
+# DISPLAY: RESMIN
+# DISPLAY: RESMAX
+# DISPLAY: SYM
+# DISPLAY: imagename_original
+# DISPLAY: ALAT
+# DISPLAY: tempfac
+# DISPLAY: phaori
+# DISPLAY: phaoriFouFilter
+# DISPLAY: ctfrev
+# DISPLAY: avrgamphsNUMBER
+# DISPLAY: avrgamphsRESOL
+# DISPLAY: zstarrange
+# DISPLAY: Calc_from_zstarrange
+# DISPLAY: zstarrange_real
+# DISPLAY: realang
+# DISPLAY: realcell
+# DISPLAY: rot90
+# DISPLAY: rot180
+# DISPLAY: revhk
+# DISPLAY: revhnd
+# DISPLAY: sgnxch
+# DISPLAY: revxsgn
+# DISPLAY: MergePhaseResidual
+# DISPLAY: comment
+# DISPLAY: npo_cntrs_step
+# DISPLAY: npo_cntrs_below 
+# DISPLAY: MergeIQMAX
+# DISPLAY: movie_enable
+# DISPLAY: mapdimpx
+#
+#$end_local_vars
+#
+set bin_2dx = ""
+set proc_2dx = ""
+#
+set SYN_Unbending = ""
+set imagename = ""
+set nonmaskimagename = ""
+set defocus = ""
+set imagenumber = ""
+set imagesidelength = ""
+set magnification = ""
+set stepdigitizer = ""
+set tempkeep = ""
+set RESMIN = ""
+set RESMAX = ""
+set phacon = ""
+set CS = ""
+set KV = ""
+set ALAT = ""
+set lattice = ""
+set realang = ""
+set realcell = ""
+set phaori = ""
+set phaoriFouFilter = ""
+set rot180 = ""
+set revhk = ""
+set rot90 = ""
+set revhnd = ""
+set sgnxch = ""
+set revxsgn = ""
+set ctfrev = ""
+set beamtilt = ""
+set zstarrange = ""
+set Calc_from_zstarrange = ""
+set zstarrange_real = ""
+set tempfac = ""
+set TLTAXIS = ""
+set TLTANG = ""
+set TLTAXA = ""
+set TAXA = ""
+set TANGL = ""
+set SYM = ""
+set avrgamphsNUMBER = ""
+set avrgamphsRESOL = ""
+set ML_doit = ""
+set npo_cntrs_step = ""
+set npo_cntrs_below = ""
+set PHARES_SYM = ""
+set PHARES_NUM_SPOTS = ""
+set MergeIQMAX = ""
+set movie_enable = ""
+set RFACAMP = ""
+set show_hkl = ""
+set show_phares = ""
+set show_PSF = ""
+set mapdimpx = ""
+#
+#$end_vars
+#
+echo "<<@progress: 1>>"
+#
+set ccp4_setup = 'y'
+set IS_2DX = yes
+source ${proc_2dx}/initialize
+#
+set scriptname = 2dx_generateSymMap
+#
+\rm -f LOGS/${scriptname}.results
+#
+set date = `date`
+echo date = ${date}
+#
+if ( ${Calc_from_zstarrange} == "y" ) then
+  set zstarrange_real = `echo ${zstarrange} ${ALAT} | awk '{ s = 1.0 / ( $1 ) } END { print s }'`
+  echo "set zstarrange_real = ${zstarrange_real}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "Calculating vertical resolution as ${zstarrange_real} Angstroems."
+else
+  set zstarrange = `echo ${zstarrange_real} ${ALAT} | awk '{ s = 1.0 / ( $1 ) } END { print s }'`
+  echo "set zstarrange = ${zstarrange}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "Calculating zstarrange as ${zstarrange} (with 0.5 = Nyquist resolution)."
+endif
+#
+set ABANG = `echo $realang | awk '{s=180-$1} END {print s}'`
+echo ABANG = ${ABANG}
+set IAQP2 = 0
+set IVERBOSE = 1
+set LOGOUTPUT = F
+set LPROTFOUFIL = T
+set phastepnum = 1
+set phastep = 0.1
+#
+#############################################################################
+echo ":: "
+echo ":: first in space group p1"
+echo ":: "
+#
+set SYM_sub = 'p1'
+set spcgrp = "1"
+set spcgroup_num = "1"
+set CCP4_SYM = "1"
+set ML_sym_val = "1"
+#
+set symmetry = 'p1'
+set spcgrp_local = 1
+set CCP4_SYM = 1
+set rotate_to_Z = "no"
+#
+# origtilt does something strange when working with spcgrp>1. (TODO).
+# Symmetrization is therefore here only done by the CCP4 programs.
+#
+set spcgrp_first = 1
+echo spcgrp_first = ${spcgrp_first}
+#
+echo spcgrp = ${spcgrp}
+echo SYM_sub = ${SYM_sub}
+echo CCP4_SYM = ${CCP4_SYM}
+echo rotate_to_Z = ${rotate_to_Z}
+#
+#
+#############################################################################
+${proc_2dx}/linblock "Sourcing generateMap script for p1 symmetry"
+#############################################################################
+#############################################################################
+#############################################################################
+#
+set iname = image_ctfcor
+set aphfile = APH/${iname}_fou_unbent_ctf.aph
+#
+# A check in case somebody just upgraded from an earlier version of 2dx:
+if ( ! -e ${aphfile} ) then
+  if ( -e APH/${imagename}_ctf.aph ) then
+    \cp APH/${imagename}_ctf.aph ${aphfile}
+  endif
+endif
+#
+echo "# IMAGE: ${aphfile} <APH: Input Unbending Amp&Phase File [H,K,A,P(CTF Phase flipped),IQ,Back,CTF]>" >> LOGS/${scriptname}.results
+echo "# IMAGE: PS/${iname}-quadserch2b.ps <PS: Vector Plot of distortions 2>" >> LOGS/${scriptname}.results
+echo "# IMAGE: PS/${iname}_ctf.ps <PS: IQ Plot after CTF correction>" >> LOGS/${scriptname}.results
+#
+# echo "# IMAGE: frame_quadserch.ps <PS: QUADSERCH Movie Profiles>" >> LOGS/${scriptname}.results
+# echo "# IMAGE: frame_unbending.ps <PS: CCUNBEND Movie Profiles>" >> LOGS/${scriptname}.results
+set prefix = ""
+set prename = "Unb.II "
+#
+set phaorix = `echo ${phaori} | cut -d\, -f1 | awk '{ s =  $1 } END { print s }'`
+set phaoriy = `echo ${phaori} | cut -d\, -f2 | awk '{ s =  $1 } END { print s }'`
+set phaori_local_nospace = `echo ${phaorix},${phaoriy}`
+set phaori_local = ${phaori_local_nospace}
+#############################################################################
+# Unbend II
+source ${proc_2dx}/2dx_generateMap_sub.com
+#############################################################################
+#
+echo "<<@progress: 10>>"
+#
+#
+#
+echo "<<@progress: 15>>"
+#
+#
+set aphfile = APH/ML_result.aph
+if ( -e ${aphfile} ) then
+  echo ":: "
+  ${proc_2dx}/linblock "Sourcing generateMap script for ML reconstruction in p1 symmetry"
+  echo ":: "
+  echo "# IMAGE: ${aphfile} <APH: ML Input Amp&Phase File>" >> LOGS/${scriptname}.results
+  set prefix = "ML_"
+  set prename = "ML "
+  #
+  set phaori_local = "0.0,0.0"
+  #############################################################################
+  # ML
+  source ${proc_2dx}/2dx_generateMap_sub.com
+  #############################################################################
+  #
+endif
+#
+echo "<<@progress: 20>>"
+#
+set aphfile = APH/${iname}_movie_fou_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from MovieA processing"
+    echo ":: "
+    echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MovieA processing>" >> LOGS/${scriptname}.results
+    set prefix = "movie_"
+    set prename = "MA "
+    #
+    set phaori_local = ${phaori_local_nospace}
+    #############################################################################
+    # Movie A
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from MovieA processing, file not found: ${aphfile}"
+endif
+#
+echo "<<@progress: 30>>"
+#
+set aphfile = APH/${iname}_movieB_fou_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from MovieB processing"
+    echo ":: "
+    echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MovieB processing>" >> LOGS/${scriptname}.results
+    set prefix = "movieB_"
+    set prename = "MB "
+    #
+    set phaori_local = ${phaori_local_nospace}
+    #############################################################################
+    # Movie B
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from MovieB processing, file not found: ${aphfile}"
+endif
+#
+echo "<<@progress: 35>>"
+#
+echo ":: "
+#
+#
+echo ":: "
+echo ":: and now in space group ${SYM}"
+echo ":: "
+#
+#############################################################################
+${proc_2dx}/linblock "sourcing sym2spsgrp_sub.com"
+#############################################################################
+#
+set SYM_sub = ${SYM}
+#
+source ${proc_2dx}/2dx_sym2spcgrp_sub.com
+#
+# origtilt does something strange when working with spcgrp>1. (TODO).
+# Symmetrization is therefore here only done by the CCP4 programs.
+#
+set spcgrp_first = 1
+echo spcgrp_first = ${spcgrp_first}
+#
+echo spcgrp = ${spcgrp}
+echo SYM = ${SYM}
+echo CCP4_SYM = ${CCP4_SYM}
+echo rotate_to_Z = ${rotate_to_Z}
+#
+#
+#############################################################################
+${proc_2dx}/linblock "Sourcing generateMap script for ${SYM} symmetry"
+#############################################################################
+#############################################################################
+#############################################################################
+#
+set aphfile = APH/${iname}_fou_unbent_ctf.aph
+set prefix = ""
+set prename = "Unb.II "
+#
+#############################################################################
+# Unbend II
+source ${proc_2dx}/2dx_generateMap_sub.com
+#############################################################################
+#
+echo "<<@progress: 50>>"
+#
+#
+#
+set aphfile = APH/ML_result.aph
+if ( -e ${aphfile} ) then
+  echo ":: "
+  ${proc_2dx}/linblock "Sourcing generateMap script for ML reconstruction in p1 symmetry"
+  echo ":: "
+  echo "# IMAGE: ${aphfile} <APH: ML Input Amp&Phase File>" >> LOGS/${scriptname}.results
+  set prefix = "ML_"
+  set prename = "ML "
+  #
+  set phaori_local = "0.0,0.0"
+  #############################################################################
+  # ML
+  source ${proc_2dx}/2dx_generateMap_sub.com
+  #############################################################################
+  #
+endif
+#
+echo "<<@progress: 60>>"
+#
+set aphfile = APH/${iname}_movie_fou_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from MovieA processing"
+    echo ":: "
+    echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MovieA processing>" >> LOGS/${scriptname}.results
+    set prefix = "movie_"
+    set prename = "MA "
+    #
+    set phaori_local = ${phaori_local_nospace}
+    #############################################################################
+    # Movie A
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from MovieA processing, file not found: ${aphfile}"
+endif
+#
+echo "<<@progress: 70>>"
+#
+set aphfile = APH/${iname}_movieB_fou_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from MovieB processing"
+    echo ":: "
+    echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MovieB processing>" >> LOGS/${scriptname}.results
+    set prefix = "movieB_"
+    set prename = "MB "
+    #
+    set phaori_local = ${phaori_local_nospace}
+    #############################################################################
+    # Movie B
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from MovieB processing, file not found: ${aphfile}"
+endif
+#
+echo "<<@progress: 80>>"
+#
+echo ":: "
+#
+#
+#############################################################################
+#############################################################################
+#############################################################################
+#############################################################################
+#
+echo "<<@progress: 100>>"
+#
+#
+##########################################################################
+${proc_2dx}/linblock "${scriptname} - normal end."
+##########################################################################
+#
+exit
+#
+# Just to make sure the 2dx GUI displays this as well:
+source ${proc_2dx}/2dx_checklattice_sub.com 
+#
+#
+#
+#
+# The following is outdated and should not be used (Synthetic reference only induces reference bias but does not help determine a structure):
+#
+# Synthetic Unbending result is used:
+set aphfile = APH/${iname}_U2-Syn_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from U2-Syn unbending"
+    echo ":: "
+    echo "# IMAGE: ${aphfile} <APH: Amp&Phase from U2-Syn unbending>" >> LOGS/${scriptname}.results
+    set prefix = "U2-Syn_"
+    set prename = "U2-Syn "
+    #
+    set phaori_local = ${phaori_local_nospace}
+    #############################################################################
+    # U2-Syn
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from U2-Syn processing, file not found: ${aphfile}"
+endif
+#
+set aphfile = APH/${iname}_movie_syn_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from MovieA U2-Syn processing"
+    echo ":: "
+    echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MovieA U2-Syn processing>" >> LOGS/${scriptname}.results
+    set prefix = "movie_syn_"
+    set prename = "MA_Syn "
+    #
+    set phaori_local = ${phaori_local_nospace}
+    #############################################################################
+    # Movie A U2-Syn
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from MovieA U2-Syn processing, file not found: ${aphfile}"
+endif
+#
+set aphfile = APH/${iname}_movieB_syn_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from MovieB U2-Syn processing"
+    echo ":: "
+    echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MovieB U2-Syn processing>" >> LOGS/${scriptname}.results
+    set prefix = "movieB_syn_"
+    set prename = "MB_Syn "
+    #
+    set phaori_local = ${phaori_local_nospace}
+    #############################################################################
+    # Movie B U2-Syn
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from MovieB U2-Syn processing, file not found: ${aphfile}"
+endif
+#
+# Synthetic Unbending result is used:
+set aphfile = APH/${iname}_U2-Syn_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from U2-Syn unbending"
+    echo ":: "
+    echo "# IMAGE: ${aphfile} <APH: Amp&Phase from U2-Syn unbending>" >> LOGS/${scriptname}.results
+    set prefix = "U2-Syn_"
+    set prename = "U2-Syn "
+    #
+    set phaori_local = ${phaori_local_nospace}
+    #############################################################################
+    # U2-Syn
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from U2-Syn processing, file not found: ${aphfile}"
+endif
+#
+set aphfile = APH/${iname}_movie_syn_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from MovieA U2-Syn processing"
+    echo ":: "
+    echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MovieA U2-Syn processing>" >> LOGS/${scriptname}.results
+    set prefix = "movie_syn_"
+    set prename = "MA_Syn "
+    #
+    set phaori_local = ${phaori_local_nospace}
+    #############################################################################
+    # Movie A U2-Syn
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from MovieA U2-Syn processing, file not found: ${aphfile}"
+endif
+#
+set aphfile = APH/${iname}_movieB_syn_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from MovieB U2-Syn processing"
+    echo ":: "
+    echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MovieB U2-Syn processing>" >> LOGS/${scriptname}.results
+    set prefix = "movieB_syn_"
+    set prename = "MB_Syn "
+    #
+    set phaori_local = ${phaori_local_nospace}
+    #############################################################################
+    # Movie B U2-Syn
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from MovieB U2-Syn processing, file not found: ${aphfile}"
+endif
+#
+
+

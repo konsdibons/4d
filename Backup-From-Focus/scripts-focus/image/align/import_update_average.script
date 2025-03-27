@@ -1,0 +1,276 @@
+#!/bin/tcsh -fe
+####
+#
+#############################################################################
+#                                                                           #
+# Title: Update Microscope Statistic Images                                 # 
+#                                                                           #
+# (C) 2dx.org, GNU Plublic License.                                         #
+#                                                                           #
+# Created..........: 12/06/2016                                             #
+# Last Modification: 12/06/2016                                             #
+# Author...........: 2dx.org                                                #
+#                                                                           #
+#############################################################################
+#
+# SORTORDER: 80
+#
+# MANUAL: <B>This script will compute a running average of all images recorded in this session.</B>
+#
+# DISPLAY: imagename_original
+# DISPLAY: imagenumber
+# DISPLAY: tempkeep
+# DISPLAY: comment
+# DISPLAY: crop_histogram
+# DISPLAY: crop_histogram_stdev
+# DISPLAY: import_rawstack
+# DISPLAY: import_rawstack_original
+# DISPLAY: import_rawstack_type
+# DISPLAY: import_gainref
+# DISPLAY: import_gainref_original
+# DISPLAY: import_defects
+# DISPLAY: import_defects_original
+# DISPLAY: raw_gaincorrectedstack
+# DISPLAY: do_unpack
+#
+#$end_local_vars
+#
+# Static directory variables at disposition are:
+# appDir_2dx
+# scripts-standard_2dx
+# scripts-custom_2dx
+#
+set bin_2dx = ""
+set proc_2dx = ""
+set app_2dx_mrc_converter = ""
+#
+# Variables to be available from the config file are:
+set tempkeep = ""
+set imagename = ""
+set nonmaskimagename = ""
+set crop_histogram = ""
+set crop_histogram_stdev = ""
+set movie_stackname = ""
+set import_rawstack = ""
+set import_rawstack_type = ""
+set import_gainref = ""
+set import_gainref_original = ""
+set import_defects = ""
+set import_defects_original = ""
+set raw_gaincorrectedstack = ""
+set import_rawstack_original = ""
+set import_original_time = ""
+set Thread_Number = ""
+set movie_stackname = ""
+set do_unpack = ""
+#
+#$end_vars
+#
+set scriptname = import_update_average
+\rm -f LOGS/${scriptname}.results
+#
+source ${proc_2dx}/initialize
+#
+source ${proc_2dx}/2dx_makedirs
+#
+setenv OMP_NUM_THREADS ${Thread_Number}
+#
+echo "<<@progress: 10>>"
+#
+# Do not change definition of "average", since this is also required in "push to status website" script.
+set average = "../../microscope_average"
+#
+if(${import_original_time} == "-" || ${import_original_time} == "") then
+   @ status_date = `date +%s` * 1000
+   set date_text = "Updated on "`echo ${status_date} | awk ' { s = $1 / 1000 } END { print s } ' | ${app_gawk} '{print strftime("%c", $0)}' `
+else
+   set status_date = ${import_original_time}
+   set date_text = "Recorded at "`echo ${status_date} | awk ' { s = $1 / 1000 } END { print s } ' | ${app_gawk} '{print strftime("%c", $0)}' `
+endif
+#
+if ( ${do_unpack} == "n" ) then
+  ${proc_2dx}/linblock "#"
+  ${proc_2dx}/linblock "#"
+  ${proc_2dx}/linhash "If not unpacking compressed image, then this script cannot be run."
+  ${proc_2dx}/linblock "#"
+  ${proc_2dx}/linblock "#"
+  exit
+endif
+#
+${dir_imod}/bin/clip spectrum -m 2 ${raw_gaincorrectedstack}.mrc ${raw_gaincorrectedstack}_spectrum.mrc
+#
+if ( -e ${movie_stackname}_Sum.mrc ) then
+  ${dir_imod}/bin/clip spectrum -m 2 ${movie_stackname}_Sum.mrc ${movie_stackname}_Sum_spectrum.mrc
+else
+  ${proc_2dx}/linblock "WARNING: aligned movie (2D) not found."
+endif
+#
+if ( ! ( -e ${average}.mrc && -e ${average}_spectrum.mrc && -e ${average}_driftcor_spectrum.mrc && -e ${average}_squared.mrc ) ) then
+  \cp -f ${raw_gaincorrectedstack}.mrc ${average}.mrc
+  \cp -f ${raw_gaincorrectedstack}_fft.mrc ${average}_fft.mrc
+  \cp -f ${raw_gaincorrectedstack}_spectrum.mrc ${average}_spectrum.mrc
+  ${dir_imod}/bin/clip multiply -m 2 ${raw_gaincorrectedstack}.mrc ${raw_gaincorrectedstack}.mrc ${average}_squared.mrc
+  if ( -e ${movie_stackname}_Sum.mrc ) then
+    \cp -f ${movie_stackname}_Sum_spectrum.mrc ${average}_driftcor_spectrum.mrc
+  endif
+else
+  ###########################################################################################################
+  ${proc_2dx}/linblock "Calculating Average Image"
+  ###########################################################################################################
+  #
+  \rm -f tmp.mrc
+  ${dir_imod}/bin/clip add ${raw_gaincorrectedstack}.mrc ${average}.mrc tmp.mrc
+  \cp -f tmp.mrc FASTDISK/tmp.mrc
+  \mv -f tmp.mrc ${average}.mrc
+  \rm -f ${average}.mrc.png
+  \rm -f tmp2.png
+  \rm -f STATUS/6-AverageImage.jpg
+  ${app_2dx_mrc_converter} --size 400 ${average}.mrc ${average}.mrc.png
+  if ( ${status_folder} != "none" ) then
+    if ( ! -d ${status_folder} ) then
+      \mkdir ${status_folder}
+    endif
+    #
+    ${app_python} ${proc_2dx}/PNGannotator.py ${average}.mrc.png tmp2.png 10 350 0 "Average session image before drift correction (non-DW)"
+    ${app_python} ${proc_2dx}/PNGannotator.py tmp2.png STATUS/6-AverageImage.jpg 10 365 0 "${date_text}"
+    \cp -f STATUS/6-AverageImage.jpg ${status_folder}/6-AverageImage.jpg
+    echo "# IMAGE-IMPORTANT: STATUS/6-AverageImage.jpg <Average Image of Session>" >> LOGS/${scriptname}.results
+  endif
+  #
+  echo "<<@progress: 50>>"
+  #
+  ###########################################################################################################
+  ${proc_2dx}/linblock "Calculating Average Image FFT"
+  ###########################################################################################################
+  #
+  \rm -f FASTDISK/tmp2.mrc
+  # labelh.exe: IMODE= 42: Transform into REAL output format with automatic scaling to STDEV=100 and TRUNC to 4xSTD
+  time ${bin_2dx}/labelh.exe << eot
+FASTDISK/tmp.mrc
+42
+FASTDISK/tmp2.mrc
+eot
+  #
+  ${dir_imod}/bin/clip fft FASTDISK/tmp2.mrc tmp_fft.mrc
+  \mv -f tmp_fft.mrc ${average}_fft.mrc
+  ${app_2dx_mrc_converter} --size 400 ${average}_fft.mrc ${average}_fft.mrc.png  
+  \rm -f FASTDISK/tmp.mrc
+  \rm -f FASTDISK/tmp2.mrc
+  #
+  ###########################################################################################################
+  ${proc_2dx}/linblock "Calculating Average PowerSpectrum"
+  ###########################################################################################################
+  #
+  \rm -f tmp_spectrum.mrc
+  ${dir_imod}/bin/clip add ${raw_gaincorrectedstack}_spectrum.mrc ${average}_spectrum.mrc tmp_spectrum.mrc
+  \mv -f tmp_spectrum.mrc ${average}_spectrum.mrc
+  \rm -f ${average}_spectrum.mrc.png
+  ${app_2dx_mrc_converter} --size 400 ${average}_spectrum.mrc ${average}_spectrum.mrc.png  
+  #
+  ###########################################################################################################
+  ${proc_2dx}/linblock "Calculating Average PowerSpectrum after driftcorrection"
+  ###########################################################################################################
+  #
+  if ( -e ${movie_stackname}_Sum.mrc ) then
+    \rm -f tmp_spectrum.mrc
+    ${dir_imod}/bin/clip add ${movie_stackname}_Sum_spectrum.mrc ${average}_driftcor_spectrum.mrc tmp_driftcor_spectrum.mrc
+    \mv -f tmp_driftcor_spectrum.mrc ${average}_driftcor_spectrum.mrc
+    ${app_2dx_mrc_converter} --size 400 ${average}_driftcor_spectrum.mrc ${average}_driftcor_spectrum.mrc.png  
+  endif
+  #
+  ###########################################################################################################
+  ${proc_2dx}/linblock "Calculating Variance Image"
+  ###########################################################################################################
+  #
+  # Calculate the Variance of the image, by computing
+  # VAR = AVG(image*image) - AVG(image)*AVG(image)
+  #
+  #--------------------------------------------------------
+  ${proc_2dx}/lin "Calculating the Average of the Squared Image"
+  #--------------------------------------------------------
+  #
+  \rm -f FASTDISK/tmp.mrc
+  \rm -f FASTDISK/tmp2.mrc
+  \rm -f FASTDISK/tmp_squaredimage.mrc
+  \rm -f tmp.mrc
+  ${dir_imod}/bin/clip multiply -m 2 ${raw_gaincorrectedstack}.mrc ${raw_gaincorrectedstack}.mrc FASTDISK/tmp.mrc
+  ${dir_imod}/bin/clip add FASTDISK/tmp.mrc ${average}_squared.mrc FASTDISK/tmp2.mrc
+  time ${bin_2dx}/labelh.exe << eot
+FASTDISK/tmp2.mrc
+42
+FASTDISK/tmp_squaredimage.mrc
+eot
+  \cp -f FASTDISK/tmp2.mrc tmp.mrc
+  \mv -f tmp.mrc ${average}_squared.mrc
+  #
+  #--------------------------------------------------------
+  ${proc_2dx}/lin "Calculating the Square of the Average Image"
+  #--------------------------------------------------------
+  #
+  \rm -f FASTDISK/tmp.mrc
+  \rm -f FASTDISK/tmp_imagesquared.mrc
+  ${dir_imod}/bin/clip multiply ${average}.mrc ${average}.mrc FASTDISK/tmp.mrc
+  time ${bin_2dx}/labelh.exe << eot
+FASTDISK/tmp.mrc
+42
+FASTDISK/tmp_imagesquared.mrc
+eot
+  #
+  #--------------------------------------------------------
+  ${proc_2dx}/lin "Calculating the difference between both to compute the variance"
+  #--------------------------------------------------------
+  #
+  \rm -f FASTDISK/tmp.mrc
+  ${dir_imod}/bin/clip subtract FASTDISK/tmp_squaredimage.mrc FASTDISK/tmp_imagesquared.mrc FASTDISK/tmp.mrc
+  \rm -f tmp_variance.mrc
+  # labelh.exe: IMODE= 42: Transform into REAL output format with automatic scaling to STDEV=100 and TRUNC to 4xSTD
+  time ${bin_2dx}/labelh.exe << eot
+FASTDISK/tmp.mrc
+42
+tmp_variance.mrc
+eot
+  #
+  ###########################################################################################################
+  ${proc_2dx}/linblock "Calculating the FFT of the variance"
+  ###########################################################################################################
+  #
+  \rm -f tmp_fft.mrc
+  ${dir_imod}/bin/clip fft tmp_variance.mrc tmp_fft.mrc
+  \mv -f tmp_variance.mrc ${average}_variance.mrc
+  ${app_2dx_mrc_converter} --size 400 ${average}_variance.mrc ${average}_variance.mrc.png  
+  \mv -f tmp_fft.mrc ${average}_variance_fft.mrc
+  ${app_2dx_mrc_converter} --size 400 ${average}_variance_fft.mrc ${average}_variance_fft.mrc.png  
+  #
+  #
+  \rm -f FASTDISK/tmp.mrc
+  \rm -f FASTDISK/tmp2.mrc
+  \rm -f FASTDISK/tmp3.mrc
+  \rm -f FASTDISK/tmp_imagesquared.mrc
+  \rm -f FASTDISK/tmp_squaredimage.mrc
+endif
+#
+echo "# IMAGE: ${raw_gaincorrectedstack}.mrc <Gain-corrected average image (2D)>" >> LOGS/${scriptname}.results
+if ( -e ${movie_stackname}_Sum.mrc ) then
+  echo "# IMAGE: ${movie_stackname}_Sum.mrc <Drift-orrected average image (2D)>" >> LOGS/${scriptname}.results
+endif
+echo "# IMAGE-IMPORTANT: ${average}.mrc <Microscope average of images (2D)>" >> LOGS/${scriptname}.results
+echo "# IMAGE-IMPORTANT: ${average}_fft.mrc <Microscope average image FFT (2D)>" >> LOGS/${scriptname}.results
+echo "# IMAGE: ${average}_squared.mrc <Microscope average of squared images (2D)>" >> LOGS/${scriptname}.results
+echo "# IMAGE-IMPORTANT: ${average}_variance.mrc <Microscope average variance image (2D)>" >> LOGS/${scriptname}.results
+echo "# IMAGE-IMPORTANT: ${average}_variance_fft.mrc <Microscope average variance image FFT (2D)>" >> LOGS/${scriptname}.results
+echo "# IMAGE-IMPORTANT: ${average}_spectrum.mrc <Microscope average PS before drift correction (2D)>" >> LOGS/${scriptname}.results
+if ( -e ${movie_stackname}_Sum.mrc ) then
+  echo "# IMAGE-IMPORTANT: ${average}_driftcor_spectrum.mrc <Microscope average PS after drift correction (2D)>" >> LOGS/${scriptname}.results
+endif
+#
+echo "<<@progress: 90>>"
+#
+##########################################################################
+${proc_2dx}/linblock "${scriptname} - normal end."
+##########################################################################
+#
+echo "<<@progress: 100>>"
+echo "<<@evaluate>>"
+#
+exit
+#

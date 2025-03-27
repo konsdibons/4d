@@ -1,0 +1,6 @@
+#!/bin/tcsh -ef
+#
+set infile = $1
+#
+${pdfViewer_focus_app} ${infile}
+

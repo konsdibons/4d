@@ -1,0 +1,6 @@
+#!/bin/tcsh -ef
+#
+set infile = $1
+#
+$scriptEditor_focus_app ${infile}
+

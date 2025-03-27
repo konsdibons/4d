@@ -1,0 +1,36 @@
+#!/bin/tcsh 
+#---------------------------------------------------------------------
+# script to delete files older than 2 weeks.
+#---------------------------------------------------------------------
+#
+if ( $1 != "YES" ) then
+        echo "Usage to delete files older than 2 weeks: "
+        echo "`basename $0` YES " >&2
+        echo " "
+        echo "Only doing trial run without deleting anything"
+        echo '*############################################################################*'
+        echo '| Finding files older than 2 weeks in /mnt/store2/Only2weeks                 |'
+        echo '*============================================================================*'
+        echo '|                                                                            |'
+        find /mnt/store2/Only2weeks/* -type d -mtime +15 -exec ls -ld {} \;
+        echo '|                                                                            |'
+        echo '*============================================================================*'
+        echo '| Now showing all files:                                                     |'
+        echo '*============================================================================*'
+        echo '|                                                                            |'
+        find /mnt/store2/Only2weeks/* -type f -mtime +15 -exec ls -l {} \;
+        echo '|                                                                            |'
+        echo '*============================================================================*'
+        exit 1
+else
+    if ( $1 == "YES" ) then
+        echo '*############################################################################*'
+        echo '| Deleting files older than 2 weeks in /mnt/store2/Only2weeks                |'
+        echo '*============================================================================*'
+        echo '|                                                                            |'
+        find /mnt/store2/Only2weeks/* -type f -mtime 15 -exec \rm -v {} \;
+        echo '|                                                                            |'
+        echo '*============================================================================*'
+        echo ''
+    endif
+endif

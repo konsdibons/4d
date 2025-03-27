@@ -1,0 +1,178 @@
+#!/bin/tcsh -ef
+#
+# This is not an executable script. It is only sourced from other scripts.
+# The purpose of this script is to initiate the sub-directories, where all the different file types will be stored.
+# It also allows specifying in the variable names SCRATCH_DISK locations for the sub-directories 
+# SCRATCH and FFTR, which can then lie on a different drive. If that different drive is a very fast drive, e.g. in form
+# of a RAM disk, then the overall processing performance for processing a larger number of images simultaneously 
+# in several instances of 2dx_image will strongly increase.
+#
+# You could also implement that fast disk by placing it on a RAID-0 or RAID-5-managed hard-drive stack, or on a Solid-State drive.
+#
+####
+#
+#
+#################################################################################
+#
+#
+# Create a SCRATCH disk on a fast drive, if the parameter SCRATCH_DISK is set
+#
+# if the variable is not set
+if ( $?SCRATCH_DISK == 0 ) then
+  set SCRATCH_DISK = "."
+endif
+#
+if ( $?FAST_DISK == 0 ) then
+  set FAST_DISK = "."
+endif
+#
+# Create a SCRATCH disk on a fast drive, if the parameter SCRATCH_DISK is set
+# if the variable is not set
+alias createLink 'eval " \\
+		  if (\! -e \!:1 ) then \\
+    		    mkdir -p \!:1 \\
+		  endif \\
+		  if ( -e \!:2 ) then \\
+    		    	rm -rf \!:2 \\
+		  endif \\
+		  ln -fs \!:1 \!:2"'
+#
+alias replaceWithLink 'eval " \\
+		  if (\! -e \!:1 ) then \\
+    		    mkdir -p \!:1 \\
+		  endif \\
+		  if ( -e \!:2 ) then \\
+		  	if ( -d \!:2 ) then \\
+		    		if (`ls -1 \!:2/ | wc -l` != 0 ) then \\
+	              			mv \!:2/* \!:1 \\
+		   	 	endif \\
+    		    	rm -rf \!:2 \\
+		  	endif \\
+		  endif \\
+		  ln -fs \!:1 \!:2"'
+#
+set path_has_space = `echo "$PWD" | wc -w`
+set SCRATCH_has_space = `echo "$SCRATCH_DISK" | wc -w`
+#
+if ( ${path_has_space} != '1' ) then
+  echo ":: "
+  echo "::                           ERROR ERROR ERROR ERROR ERROR "
+  echo "::                           No SPACES in pathname allowed."
+  echo "::                           ERROR ERROR ERROR ERROR ERROR "
+  echo "::" $PWD
+  echo ":: has spaces in the pathname."
+  echo ":: You must rename the directories that lead to this place."
+  echo ":: "
+  ${proc_2dx}/protest "Aborting."
+endif
+#
+if ( ${SCRATCH_has_space} != '1' ) then
+  echo ":: "
+  echo "::                           ERROR ERROR ERROR ERROR ERROR "
+  echo "::                           No SPACES in pathname allowed."
+  echo "::                           ERROR ERROR ERROR ERROR ERROR "
+  echo "::" $SCRATCH_DISK
+  echo ":: has spaces in the pathname."
+  echo ":: You must rename the SCRATCH disk name."
+  echo ":: "
+  ${proc_2dx}/protest "Aborting."
+endif
+#
+if ( ! -w SCRATCH ) then
+  \rm -rf SCRATCH
+endif
+#
+if ( ! -w FFTIR ) then
+  \rm -rf FFTIR
+endif
+#
+if ( ! -w FASTDISK ) then
+  \rm -rf FASTDISK
+endif
+#
+if ( ${SCRATCH_DISK} == "." || ${SCRATCH_DISK} == "" ) then
+  if ( ! -d SCRATCH && ! -l SCRATCH) then
+    echo ":SCRATCH disk will be local."
+    \mkdir SCRATCH
+  endif
+else
+  set olddir = $PWD
+  set newscratch = ${SCRATCH_DISK}${olddir}/SCRATCH
+  if ( ! -l SCRATCH ) then
+        if ( ! -e SCRATCH ) then 
+          createLink ${newscratch} SCRATCH
+	else
+          replaceWithLink ${newscratch} SCRATCH
+        endif
+  else
+    set target = `readlink SCRATCH`
+    if ("$target" != "$newscratch") then
+	echo "::SCRATCH target has changed."
+    	replaceWithLink  ${newscratch} SCRATCH
+    endif
+  endif
+endif
+#
+if ( ${FAST_DISK} == "." || ${FAST_DISK} == "" ) then
+  if ( ! -d FASTDISK && ! -l FASTDISK ) then
+    echo ":FASTDISK disk will be local."
+    \mkdir FASTDISK
+  endif
+else
+  set olddir = $PWD
+  set olddir_first = `echo ${olddir} | cut -d\/  -f2`
+  set newfastdisk = ${FAST_DISK}${olddir}/FASTDISK
+  cd ${FAST_DISK}
+  # cd ..
+  set FAST_ROOT = `echo $PWD | sed 's/\//#/g' `
+  cd ${olddir}
+  set newfastdisk = ${FAST_DISK}${olddir}/FASTDISK
+  if ( -l FASTDISK ) then
+    if ( ! -e FASTDISK ) then
+      \rm -f FASTDISK
+    endif
+  endif
+  if ( ! -l FASTDISK ) then
+        if ( ! -e FASTDISK ) then 
+          createLink ${newfastdisk} FASTDISK
+	else
+          replaceWithLink ${newfastdisk} FASTDISK
+        endif
+  else
+    set target = `readlink FASTDISK`
+    if ("$target" != "$newfastdisk") then
+	echo "::FASTDISK target has changed."
+    	replaceWithLink  ${newfastdisk} FASTDISK
+    endif
+  endif
+endif
+#
+if ( $?IS_2DX != 0 ) then
+  if ( ! -d FFTIR ) then
+    \mkdir FFTIR
+  endif
+  if ( ! -d APH ) then
+    \mkdir APH
+  endif
+  if ( ! -d PRJ ) then
+    \mkdir PRJ
+  endif
+endif
+#
+if ( ! -d proc ) then
+  \mkdir proc
+endif
+#
+if ( ! -d LOGS ) then
+  \mkdir LOGS
+endif
+#
+if ( ! -d PS ) then
+  \mkdir PS
+endif
+#
+if ( ! -d STATUS ) then
+  \mkdir STATUS
+endif
+#
+

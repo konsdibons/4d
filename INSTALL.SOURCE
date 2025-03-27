@@ -1,0 +1,91 @@
+*******************************************************************************
+ Getting the souce code
+*******************************************************************************
+
+The latest source for Focus is available at our GITHUB repository  
+https://github.com/C-CINA/focus
+
+Download: focus-{version}.tar.bz2
+Extract: tar -xvjf focus-{version}.tar.bz2
+
+
+
+
+
+*******************************************************************************
+ INSTALLATION REQUIREMENTS 
+*******************************************************************************
+---------------------------
+    GCC and GFORTRAN:
+---------------------------
+Download from:
+http://hpc.sourceforge.net
+Install via
+sudo tar -xvf gcc-4.9-bin.tar -C /
+sudo tar -xvf gfortran-4.9-bin.tar -C /
+
+----------------------------
+    CMAKE:
+---------------------------
+
+
+----------------------------
+    FFTW3: 
+----------------------------
+We need the fftw-3.0.0 or later (http://www.fftw.org) to be installed on your 
+system. We use both single precision and double precision libraries from FFTW3.
+
+Download from http://www.fftw.org/download.html
+To compile for OSX/Linux systems download the latest libraries and use the 
+following commands:
+
+./configure --enable-shared --enable-single --enable-threads --enable-sse --enable-sse2 --with-pic; 
+make; 
+sudo make install; 
+make clean; 
+./configure --enable-shared --enable-threads --enable-sse2 --with-pic; 
+make; 
+sudo make install;
+
+-------------------
+    Qt5:
+-------------------
+The application is based on Qt5 which can be downloaded and installed from:
+
+http://www.qt.io/download-open-source/
+
+Make sure that after the installation you add Qt5 bin directory to the 
+environment variable $PATH, and that:
+
+qmake -query
+
+gives you correct path to installed Qt libraries.
+
+
+
+
+
+*******************************************************************************
+ COMPILATION
+*******************************************************************************
+
+Launch
+./build_all
+
+
+
+*******************************************************************************
+ENVIRONMENT VARIABLES
+*******************************************************************************
+The script 'build_all' when ran as above will automatically add the directories containing FOCUS binaries, 
+standalone programs and Python scripts and modules to your PATH and PYTHONPATH environment variables 
+via ~/.bashrc, ~/.bash_profile, ~/.profile and/or ~/.cshrc, when applicable.
+
+
+
+*******************************************************************************
+PYTHON SCRIPTS AND STANDALONE TOOLS
+*******************************************************************************
+
+FOCUS contains many independent programs and Python scripts that you may want to use as standalone tools or modules.
+These are located under ${FOCUS_ROOT}/scripts/proc/.

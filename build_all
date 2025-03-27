@@ -1,0 +1,296 @@
+#!/bin/bash
+#
+# Build everything in the right order
+#
+# The args are passed to cmake
+set -e
+set -o pipefail
+################################################################################
+# Configuration
+################################################################################
+echo '*============================================================================*'
+echo '| Configuration								   |'
+echo '+----------------------------------------------------------------------------+'
+echo '|                                                                            |'
+
+if [ $# -lt 1 ]
+then
+	echo 'No build directory is specified, it is set to the default: '$PWD'/build'
+       	BUILD=$PWD/build
+else
+	BUILD=$1
+fi
+if [ $# -lt 2 ]
+then
+       	PREFIX=~/4d
+	echo 'No install directory is specified, therefore it is set to the directory: '$PREFIX
+	echo 'This means you install in-place'
+else
+	PREFIX=$2	
+fi
+# this is just a hiden argument for building the mac bundle
+if [ $# -eq 3 ];
+then
+	APPLE_BUNDLE=$3
+else
+	APPLE_BUNDLE=OFF
+fi
+
+# Quick fix to enforce gnu-compilers on Macs
+export CC=gcc
+export CXX=g++
+
+
+# And create build dirs here
+SRC=$(pwd)
+echo "The project structure is set as follows"
+echo "The source dir is:"
+echo $SRC 
+echo "The build dir is:"
+echo $BUILD 
+echo "The install dir is:"
+echo ${PREFIX}
+
+# check if the build dir exists
+if [ ! -e $BUILD ]; then
+	echo 'The build dir does not exist, therefore it will be created.' 
+	mkdir -p $BUILD
+fi
+echo '*============================================================================*'
+echo ''
+echo ''
+echo ''
+echo ''
+
+################################################################################
+# Fortran
+################################################################################
+#APP=kernel/mrc
+#echo '*============================================================================*'
+#echo '| ' ${APP}
+#echo '+----------------------------------------------------------------------------+'
+#echo '| prepare                                                                    |'
+#echo cd ${SRC}/${APP} || { echo "failed to change to"  ${SRC}/${APP} ; exit 1; }
+#cd ${SRC}/${APP} || { echo "failed to change to"  ${SRC}/${APP} ; exit 1; }
+#echo 'workinkg directory: '
+#pwd
+#echo '+----------------------------------------------------------------------------+'
+#echo '| autoconf                                                                   |'
+#echo autoconf || { echo "autoconf failed for" $APP ; exit 2; }
+#autoconf || { echo "autoconf failed for" $APP ; exit 2; }
+#echo '+----------------------------------------------------------------------------+'
+#echo '| configure                                                                  |'
+#echo ./configure || { echo "Configure failed for" $APP ; exit 3; } 
+#./configure || { echo "Configure failed for" $APP ; exit 3; } 
+#echo ''
+#echo '+----------------------------------------------------------------------------+'
+#echo '| make                                                                       |'
+#make VERBOSE=1 -j1 || { echo "Build failed for $APP"; exit 4; } 
+#echo ''
+#echo '+----------------------------------------------------------------------------+'
+#echo '| make install                                                               |'
+#make VERBOSE=1 -j1 install || { echo "Install failed for $APP"; read)
+#echo '*============================================================================*'
+#echo ''
+#echo ''
+#echo ''
+#echo ''
+
+
+#################################################################################
+# Focus 
+################################################################################
+
+APP=Focus
+echo '*============================================================================*'
+echo '| ' ${APP}
+echo '+----------------------------------------------------------------------------+'
+echo '| prepare                                                                    |'
+cd ${BUILD}
+echo 'workinkg directory: '
+pwd
+echo '+----------------------------------------------------------------------------+'
+echo '| configure                                                                  |'
+echo cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DAPPLE_BUNDLE=${APPLE_BUNDLE} ${SRC} || { echo "Configure failed for" $APP ; exit 5; }  
+cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DAPPLE_BUNDLE=${APPLE_BUNDLE} ${SRC} || { echo "Configure failed for" $APP ; exit 5; }
+echo ''
+
+echo '+----------------------------------------------------------------------------+'
+echo '| make                                                                       |'
+make -j1 || { echo "Build failed for $APP"; exit 6; }
+echo ''
+echo '+----------------------------------------------------------------------------+'
+echo '| make install                                                               |'
+make -j1 install || { echo "Install failed for $APP"; exit 7; }
+echo '*============================================================================*'
+echo ''
+echo ''
+cd ${PREFIX}/bin
+cd ${src}
+echo ''
+echo ''
+
+
+################################################################################
+# Replacing local "kernel" in installation site with link to svn-repository copy
+################################################################################
+
+S2='localuser'
+S3='stahlber'
+S4='dcigepc2'
+if [ "$USER" == "$S2" ] || [ "$USER" == "$S3" ] || [ "$USER" == "$S4" ];
+then
+  echo User = $USER
+  cd ${PREFIX}
+  ls -ld kernel
+  if [ -h kernel ];
+  then
+    echo "kernel link already existing."
+  else
+    # echo "Moving executables into kernel/mrc/bin"
+    # \cp -rf kernel/mrc/bin/* ${SRC}/kernel/mrc/bin
+    echo "Removing kernel directory in local ${PREFIX}"
+    \rm -rf kernel
+  fi
+  if [ ! -h kernel ];
+  then
+    echo "Replacing with link to svn-repository"
+    \ln -s ${SRC}/kernel .
+    ls -ld kernel
+  fi
+  #
+  cd scripts
+  #
+  ls -ld image
+  if [ -h image ];
+  then
+    echo "scripts/image link already existing."
+  else
+    echo "Removing image directory in local ${PREFIX}/scripts"
+    \rm -rf image
+  fi
+  if [ ! -h image ];
+  then
+    echo "Replacing with link to svn-repository"
+    \ln -s ${SRC}/scripts/image .
+    ls -ld image
+  fi
+  #
+  ls -ld notifications
+  if [ -h notifications ];
+  then
+    echo "scripts/notifications link already existing."
+  else
+    echo "Removing notifications directory in local ${PREFIX}/scripts"
+    \rm -rf notifications
+  fi
+  if [ ! -h notifications ];
+  then
+    echo "Replacing with link to svn-repository"
+    \ln -s ${SRC}/scripts/notifications .
+    ls -ld notifications
+  fi
+  #
+  ls -ld stats
+  if [ -h stats ];
+  then
+    echo "scripts/stats link already existing."
+  else
+    echo "Removing stats directory in local ${PREFIX}/scripts"
+    \rm -rf stats
+  fi
+  if [ ! -h stats ];
+  then
+    echo "Replacing with link to svn-repository"
+    \ln -s ${SRC}/scripts/stats .
+    ls -ld stats
+  fi
+  #
+  ls -ld proc 
+  if [ -h proc  ];
+  then
+    echo "scripts/proc  link already existing."
+  else
+    echo "Removing proc  directory in local ${PREFIX}/scripts"
+    \rm -rf proc 
+  fi
+  if [ ! -h proc  ];
+  then
+    echo "Replacing with link to svn-repository"
+    \ln -s ${SRC}/scripts/proc  .
+    ls -ld proc 
+  fi
+  #
+  # echo "done."
+fi
+
+echo "Checking environment files..."
+if [ -e ~/.bashrc ];
+  then
+    envfile=~/.bashrc
+    if ! grep "# Added by FOCUS on" ${envfile} >& /dev/null ;
+      then
+        echo "Adding environment variables to ${envfile}"
+        echo -e "\n">> ${envfile}
+        echo "# Added by FOCUS on `date`:" >> ${envfile}
+        echo "# (makes standalone programs and Python modules available)" >> ${envfile}
+        echo "export FOCUS_ROOT=${PREFIX}" >> ${envfile}
+        echo "export PATH=\${FOCUS_ROOT}/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${FOCUS_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${FOCUS_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
+        echo "export PYTHONPATH=\${FOCUS_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
+    fi  
+fi
+
+if [ -e ~/.bash_profile ];
+  then
+    envfile=~/.bash_profile
+    if ! grep "# Added by FOCUS on" ${envfile} >& /dev/null ;
+      then
+        echo "Adding environment variables to ${envfile}"
+        echo -e "\n">> ${envfile}
+        echo "# Added by FOCUS on `date`:" >> ${envfile}
+        echo "# (makes standalone programs and Python modules available)" >> ${envfile}
+        echo "export FOCUS_ROOT=${PREFIX}" >> ${envfile}
+        echo "export PATH=\${FOCUS_ROOT}/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${FOCUS_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${FOCUS_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
+        echo "export PYTHONPATH=\${FOCUS_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
+    fi  
+fi
+
+if [ -e ~/.profile ];
+  then
+    envfile=~/.profile
+    if ! grep "# Added by FOCUS on" ${envfile} >& /dev/null ;
+      then
+        echo "Adding environment variables to ${envfile}"
+        echo -e "\n">> ${envfile}
+        echo "# Added by FOCUS on `date`:" >> ${envfile}
+        echo "# (makes standalone programs and Python modules available)" >> ${envfile}
+        echo "export FOCUS_ROOT=${PREFIX}" >> ${envfile}
+        echo "export PATH=\${FOCUS_ROOT}/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${FOCUS_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${FOCUS_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
+        echo "export PYTHONPATH=\${FOCUS_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
+    fi  
+fi
+
+if [ -e ~/.cshrc ];
+  then
+    envfile=~/.cshrc
+    if ! grep "# Added by FOCUS on" ${envfile} >& /dev/null ;
+      then
+        echo "Adding environment variables to ${envfile}"
+        echo -e "\n">> ${envfile}
+        echo "# Added by FOCUS on `date`:" >> ${envfile}
+        echo "# (makes standalone programs and Python modules available)" >> ${envfile}
+        echo "setenv FOCUS_ROOT ${PREFIX}" >> ${envfile}
+        echo "setenv PATH \${FOCUS_ROOT}/bin:\${PATH}" >> ${envfile}
+        echo "setenv PATH \${FOCUS_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
+        echo "setenv PATH \${FOCUS_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
+        echo "setenv PYTHONPATH \${FOCUS_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
+    fi
+fi
+echo "Done!"
+exit 0

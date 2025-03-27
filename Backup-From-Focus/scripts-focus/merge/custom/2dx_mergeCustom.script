@@ -1,0 +1,334 @@
+#!/bin/tcsh -ef
+####
+#
+#############################################################################
+#                                                                           #
+# Title: Merge with Custom Input File                                       #
+#                                                                           #
+# (C) 2dx.org, GNU Plublic License.                                         #
+#                                                                           #
+# Created..........: 01/03/2007                                             #
+# Last Modification: 01/03/2007                                             #
+# Author...........: 2dx.org                                                #
+#                                                                           #
+#############################################################################
+#
+# SORTORDER: 60
+#
+# MANUAL: This script allows merging based on a custom input file.
+#
+# DISPLAY: MergeResolution
+# DISPLAY: merge_modus
+# DISPLAY: zstarrange
+# DISPLAY: Calc_from_zstarrange
+# DISPLAY: zstarrange_real
+# DISPLAY: RESMIN
+# DISPLAY: RESMAX
+# DISPLAY: tempkeep
+# DISPLAY: realcell
+# DISPLAY: realang
+# DISPLAY: ALAT
+# DISPLAY: SYM
+# DISPLAY: avrgamphsNUMBER
+# DISPLAY: avrgamphsRESOL
+# DISPLAY: MergeIPAT
+# DISPLAY: MergeDELPLT
+# DISPLAY: MergeDELPRO
+# DISPLAY: MergeIQMAX
+# DISPLAY: MergeHKMAX
+# DISPLAY: MergeRminRmax
+# DISPLAY: MergeRCUT
+# DISPLAY: MergePFACT
+# DISPLAY: MergeBINSIZ
+# DISPLAY: MergeNCYCLS
+# DISPLAY: MergeMPRINT
+# DISPLAY: MergeAK
+# DISPLAY: AMP_Scale_Factor
+# DISPLAY: MergeIWF
+# DISPLAY: MergeIWP
+# DISPLAY: max_amp_correction
+# DISPLAY: merge_file
+#
+#$end_local_vars
+#
+set bin_2dx = ""
+set proc_2dx = ""
+#
+set MergeResolution = ""
+set merge_modus = ""
+set zstarwin  = ""
+set zstarrange  = ""
+set zstarrange_real  = ""
+set Calc_from_zstarrange = ""
+set RESMIN = ""
+set RESMAX = ""
+set tempkeep = ""
+set realcell = ""
+set realang = ""
+set ALAT = ""
+set SYM = ""
+set avrgamphsNUMBER = ""
+set avrgamphsRESOL = ""
+set avrgamphsNUMBER = ""
+set avrgamphsRESOL = ""
+set MergeIPAT = ""
+set MergeDELPLT = ""
+set MergeDELPRO = ""
+set MergeRminRmax = ""
+set MergeRCUT = ""
+set MergePFACT = ""
+set MergeIQMAX = ""
+set Merge_Reference_IQMAX = ""
+set MergeHKMAX = ""
+set Merge_Reference_HKMAX = ""
+set MergeBINSIZ = ""
+set MergeNCYCLS = ""
+set MergeMPRINT = ""
+set MergeAK = ""
+set AMP_Scale_Factor = ""
+set MergeIWF = ""
+set MergeIWP = ""
+set max_amp_correction = ""
+set merge_file = ""
+#
+#$end_vars
+#
+set scriptname = 2dx_mergeCustom
+#
+\rm -f LOGS/${scriptname}.results
+#
+set ccp4_setup = 'y'
+source ${proc_2dx}/initialize
+#
+if ( ${Calc_from_zstarrange} == "y" ) then
+  set zstarrange_real = `echo ${zstarrange} ${ALAT} | awk '{ s = 1.0 / ( $1 ) } END { print s }'`
+  echo "set zstarrange_real = ${zstarrange_real}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "Calculating vertical resolution as ${zstarrange_real} Angstroems."
+else
+  set zstarrange = `echo ${zstarrange_real} ${ALAT} | awk '{ s = 1.0 / ( $1 ) } END { print s }'`
+  echo "set zstarrange = ${zstarrange}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "Calculating zstarrange as ${zstarrange} (with 0.5 = Nyquist resolution)."
+endif
+#
+set zmin = `echo ${zstarrange} | awk '{s = -$1} END {print s}'`
+set zminmax = `echo ${zmin},${zstarrange}`
+echo zminmax = ${zminmax}
+#
+echo "<<@progress: 1>>"
+#
+#################################################################################
+${proc_2dx}/linblock "Verifying some parameters"
+#################################################################################
+#
+if ( ! -e ${merge_file} ) then
+  ${proc_2dx}/protest "ERROR: File not found: ${merge_file}"
+endif
+#
+if ( `echo ${RESMIN} ${RESMAX} | awk '{ if ( $1 < $2 ) { s = 1 } else { s = 0 }} END { print s }'` == 1 ) then
+  set oldval = ${RESMIN}
+  set RESMIN = ${RESMAX}
+  set RESMAX = ${oldval}
+  ${proc_2dx}/linblock "ERROR: exchanging RESMIN and RESMAX, to RESMIN=${RESMIN}, and RESMAX=${RESMAX}"
+  echo "set RESMIN = ${RESMIN}" >> LOGS/${scriptname}.results
+  echo "set RESMAX = ${RESMAX}" >> LOGS/${scriptname}.results
+endif
+#
+if ( ${AMP_Scale_Factor}x == ‘x’ ) then
+  set AMP_Scale_Factor = 0.001
+  echo "set AMP_Scale_Factor = ${AMP_Scale_Factor}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "WARNING: AMP_Scale_Factor corrected to ${AMP_Scale_Factor}"
+endif
+# 
+if ( ${MergeAK}x == 'x' ) then
+  set MergeAK = "10"
+  echo "set MergeAK = ${MergeAK}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "WARNING: MergeAK corrected to ${MergeAK}"
+endif
+#
+if ( ${MergeIWF}x == 'x' ) then
+  set MergeIWF = "0"
+  echo "set MergeIWF = ${MergeIWF}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "WARNING: MergeIWF corrected to ${MergeIWF}"
+endif
+#
+if ( ${MergeIWP}x == 'x' ) then
+  set MergeIWP = "1"
+  echo "set MergeIWP = ${MergeIWP}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "WARNING: MergeIWP corrected to ${MergeIWP}"
+endif
+#
+if(${MergeIWF} == "0")then
+  set MergeIWF_VAL = -1
+endif
+if(${MergeIWF} == "1")then
+  set MergeIWF_VAL = 0
+endif
+if(${MergeIWF} == "2")then
+  set MergeIWF_VAL = 1
+endif
+if(${MergeIWP} == "0")then
+  set MergeIWP_VAL = -2
+endif
+if(${MergeIWP} == "1")then
+  set MergeIWP_VAL = -1
+endif
+if(${MergeIWP} == "2")then
+  set MergeIWP_VAL = 0
+endif
+if(${MergeIWP} == "3")then
+  set MergeIWP_VAL = 1
+endif
+echo MergeAK = ${MergeAK}
+echo MergeIWF_VAL = ${MergeIWF_VAL}
+echo MergeIWP_VAL = ${MergeIWP_VAL}
+#
+echo "<<@progress: 5>>"
+#
+#############################################################################
+${proc_2dx}/linblock "sourcing sym2spsgrp_sub.com"
+#############################################################################
+#
+source ${proc_2dx}/2dx_sym2spcgrp_sub.com
+#
+echo SYM = ${SYM}
+echo spcgrp = ${spcgrp}
+echo CCP4_SYM = ${CCP4_SYM}
+#
+############################################################################# 
+${proc_2dx}/lin "2dx_merge_makedirs - to create all required subdirectories"
+#############################################################################
+#
+set IS_2DX = yes
+source ${proc_2dx}/2dx_merge_makedirs
+#
+echo "<<@progress: 10>"
+#
+if ( ${merge_modus} != "3D" ) then
+  ${proc_2dx}/protest "ERROR: Only 3D mode is supported here."
+else 
+  echo "::Using Input File: ${merge_file}"
+  setenv IN ${merge_file}
+  \rm -f SCRATCH/tmplink
+  \ln -s ${merge_file} SCRATCH/tmplink
+  echo "# IMAGE-IMPORTANT: SCRATCH/tmplink <My Input File>" >> LOGS/${scriptname}.results
+  #
+  echo "<<@progress: 30>>"
+  #
+  #############################################################################
+  #                                                                           #
+  ${proc_2dx}/linblock "PREPMKMTZ - Program to convert fitted data to CCP4 format"
+  #                                                                           #
+  #############################################################################  
+  #
+  \rm -f APH/latfitted_nosym.hkl
+  \rm -f APH/latfittedref.hkl  
+  #
+  #
+  setenv OUT APH/latfitted_nosym.hkl
+  setenv REFHKL APH/latfittedref_nosym.hkl
+  #
+  ${bin_2dx}/prepmklcf.exe << eot 
+${RESMAX},1.0                          ! RESOLUTION,REDUCAC
+${realcell},${realang},${ALAT}         ! a,b,gamma,c
+1.0                                    ! SCALE
+1				       ! 1=Calculate FOM from SIGF and SIGP. 0=Calculate FOM only from SIGP (this was the original version) 
+eot
+  #
+  echo "################################################"
+  echo "################################################"
+  echo "output in file LOGS/prepmklcf.log"
+  echo "################################################"
+  echo "################################################"
+  #
+  echo "# IMAGE: APH/latfitted_nosym.hkl <Lattice lines for volume fitted after prepmklcf [H,K,L,A,P,FOM]>" >> LOGS/${scriptname}.results
+  echo "# IMAGE: APH/latfittedref_nosym.hkl <Lattice lines for reference fitted after prepmklcf [H,K,L,A,P,FOM,SIGA]>" >> LOGS/${scriptname}.results
+  #
+  echo "<<@progress: +5>>"
+  #
+  #############################################################################
+  ${proc_2dx}/linblock "2dx_hklsym4 - to apply symmetry to latfitted APH file, for volume"
+  #############################################################################    
+  #
+  ${bin_2dx}/2dx_hklsym4.exe << eot
+APH/latfitted_nosym.hkl
+APH/latfitted_sym_header.hkl
+APH/latfitted.hkl
+${spcgrp}
+0     ! no header line
+0     ! no sigma column
+0     ! only write out asymmetric unit
+0     ! do not write out also negative L values (left side of FFT)
+eot
+  #
+  echo "# IMAGE: APH/latfitted.hkl <Lattice lines for volume [H,K,L,A,P,FOM]>" >> LOGS/${scriptname}.results  
+  # 
+  #############################################################################
+  ${proc_2dx}/linblock "2dx_hklsym4 - to apply symmetry to latfitted APH file, for reference"
+  #############################################################################  
+  #
+  ${bin_2dx}/2dx_hklsym4.exe << eot
+APH/latfittedref_nosym.hkl
+APH/latfittedref_sym_header.hkl
+APH/latfittedref.hkl
+${spcgrp}
+0     ! no header line
+1     ! with sigma column
+0     ! only write out asymmetric unit
+0     ! do not write out also negative L values (left side of FFT)
+eot
+  #
+  echo "# IMAGE: APH/latfittedref.hkl <Lattice lines for reference [H,K,L,A,P,FOM,SIGA]>" >> LOGS/${scriptname}.results 
+  #
+  #############################################################################
+  ${proc_2dx}/linblock "f2mtz - Program to convert hkl data into MTZ format, for volume"
+  #############################################################################
+  #
+  set infile = APH/latfitted.hkl
+  \rm -f merge3D_MRClefthanded.mtz
+  #
+  ${bin_ccp4}/f2mtz hklin ${infile} hklout merge3D_MRClefthanded.mtz << eof
+TITLE  P1 map, ${date}
+CELL ${realcell} ${ALAT} 90.0 90.0 ${realang}
+SYMMETRY ${CCP4_SYM}
+LABOUT H K L F PHI FOM
+CTYPOUT H H H F P W
+FILE ${infile}
+SKIP 1
+END
+eof
+  #
+  echo "# IMAGE-IMPORTANT: merge3D_MRClefthanded.mtz <MTZ: Full fitted lattice line data for volume>" >> LOGS/${scriptname}.results
+  echo "<<@progress: +5>>"
+  #
+  #
+  #############################################################################
+  ${proc_2dx}/linblock "f2mtz - Program to convert hkl data into MTZ format, for reference"
+  #############################################################################
+  #
+  set infile = APH/latfittedref.hkl
+  \rm -f merge3Dref_MRClefthanded.mtz
+ #
+  ${bin_ccp4}/f2mtz hklin ${infile} hklout merge3Dref_MRClefthanded.mtz << eof
+TITLE  P1 map, ${date}
+CELL ${realcell} ${ALAT} 90.0 90.0 ${realang}
+SYMMETRY ${CCP4_SYM}
+LABOUT H K L F PHI FOM SIGA
+CTYPOUT H H H F P W Q
+FILE ${infile}
+SKIP 1
+END
+eof
+  #
+  echo "# IMAGE-IMPORTANT: merge3Dref_MRClefthanded.mtz <MTZ: Full fitted lattice line data for reference>" >> LOGS/${scriptname}.results
+  echo "<<@progress: +5>>"
+  #
+  #
+  #
+endif
+echo "<<@progress: 100>>"
+#
+#############################################################################
+${proc_2dx}/linblock "normal end."
+#############################################################################
+#
+#

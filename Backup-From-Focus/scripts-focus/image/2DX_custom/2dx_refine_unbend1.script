@@ -1,0 +1,199 @@
+#!/bin/tcsh -ef
+####
+#############################################################################
+#                                                                           #
+# Title: Refine Params Unbend I                                             #
+#                                                                           #
+# (C) 2dx.org, GNU Plublic License.                                         #
+#                                                                           #
+# Created..........: 04/01/2006                                             #
+# Last Modification: 04/01/2006                                             #
+# Author...........: 2dx.org                                                #
+#                                                                           #
+#############################################################################
+#
+# SORTORDER: 60
+#
+# MANUAL: This script allows a lengthy brute-force test of various parameter settings to search the optimal parameter combination. The script runs the core of the <I>unbend I</I> script, testing parameters according to the defined limits. It will calculate the QVal for each parameter setting, and determine the parameter that results in the highest QVal.
+#
+# MANUAL: Be aware that a reference that is too small (boxa1 too small) will result in an artificially high QVal due to noise-correlation. Keep and open eye and mind, when trying to refine boxa1. 
+#
+# MANUAL: You can run this script on one representative image over night, and the use the determined parameters as default values for other images from the same class of images (e.g. same sample, same microscope, same tilt-angle). To set default values, either edit the system-wide default 2dx_image.cfg, or edit the 2dx_image.cfg file one level up from the current image directories.
+#
+# RESET: refine_maska_doit_1 = "y"
+# RESET: refine_boxa1_doit_1 = "y"
+# RESET: refine_maska_boxa1_doit = "n"
+# RESET: refine_maska_doit_2 = "n"
+# RESET: refine_boxa1_doit_2 = "n"
+# RESET: refine_maska_doit_3 = "n"
+# RESET: refine_boxa1_doit_3 = "n"
+#
+# DISPLAY: maska
+# DISPLAY: boxa1
+# DISPLAY: RESMIN
+# DISPLAY: RESMAX
+# DISPLAY: quadpreda
+# DISPLAY: quadrada
+# DISPLAY: radlim
+# DISPLAY: IMAXCOR
+# DISPLAY: ISTEP
+# DISPLAY: ISTEP_h
+# DISPLAY: comment
+# DISPLAY: RMAG
+# DISPLAY: LCOLOR
+# DISPLAY: ccunbend_program
+# DISPLAY: refine_maska_val
+# DISPLAY: refine_boxa1_val
+#
+#$end_local_vars
+#
+set bin_2dx = ""
+set proc_2dx = ""
+#
+set maska = ""
+set boxa1 = ""
+set boxa2 = ""
+set lattice = ""
+set quadpreda = ""
+set quadrada = ""
+set imagename = ""
+set nonmaskimagename = ""
+set defocus = ""
+set imagenumber = ""
+set realcell = ""
+set holea = ""
+set imagesidelength = ""
+set magnification = ""
+set stepdigitizer = ""
+set tempkeep = ""
+set RESMIN = ""
+set RESMAX = ""
+set ALAT = ""
+set radlim = ""
+set realang = ""
+set treatspotscan = ""
+set facthresha = ""
+set phacon = ""
+set CS = ""
+set KV = ""
+set IMAXCOR = ""
+set ISTEP = ""
+set ISTEP_h = ""
+set RMAG = ""
+set LCOLOR = ""
+set ccunbend_program = ""
+set refine_maska_val = ""
+set refine_boxa1_val = ""
+set refine_maska_doit_1 = ""
+set refine_boxa1_doit_1 = ""
+set refine_maska_boxa1_doit = ""
+set refine_maska_doit_2 = ""
+set refine_boxa1_doit_2 = ""
+set refine_maska_doit_3 = ""
+set refine_boxa1_doit_3 = ""
+#
+#$end_vars
+#
+set IS_2DX = yes
+source ${proc_2dx}/initialize
+#
+set scriptname = 2dx_refine_unbend1
+\rm -f LOGS/${scriptname}.results
+#
+echo "<<@progress: 1>"
+#
+set date = `date`
+echo date = ${date}
+#
+set rmax = 11000
+echo rmax = ${rmax}
+#
+set halimsid = ${imagesidelength}
+@ halimsid /= 1
+echo halimsid = ${halimsid}
+#
+set imagecenterx = `echo ${imagesidelength} | awk '{ s = int( $1 / 2 ) } END { print s }'`
+set imagecentery = ${imagecenterx}
+#
+set rtemp1 = ${imagesidelength}
+@ rtemp1 /= 2
+set rtemp2 = ${rtemp1}
+@ rtemp1 -= 200
+@ rtemp2 += 199
+# this gives a pattern diameter of 800 pixels.
+set boxlabel = ${rtemp1},${rtemp2},${rtemp1},${rtemp2}
+echo boxlabel = ${boxlabel}
+#
+set rtemp1 = ${imagesidelength}
+@ rtemp1 /= 2
+set rtemp2 = ${rtemp1}
+@ rtemp1 -= 13
+@ rtemp2 += 12
+# this gives a pattern diameter of 26 pixels.
+set patlabel = ${rtemp1},${rtemp2},${rtemp1},${rtemp2}
+echo patlabel = ${patlabel}
+#
+set quadradax = `echo ${quadrada} | sed 's/,/ /g' | awk '{ s = int( $1 ) } END { print s }'`
+set quadraday = `echo ${quadrada} | sed 's/,/ /g' | awk '{ s = int( $2 ) } END { print s }'`
+#
+set dowarn = 'n'
+set final_round = "n"
+set createmaskinfo = "n"
+#
+if ( ${refine_maska_doit_1} == 'y' ) then
+  set refine_now = "maska"
+  source ${proc_2dx}/2dx_refine_unbend1_sub.com
+endif
+#
+if ( ${refine_boxa1_doit_1} == 'y' ) then
+  set refine_now = "boxa1"
+  source ${proc_2dx}/2dx_refine_unbend1_sub.com
+  set dowarn = 'y'
+endif
+#
+if ( ${refine_maska_boxa1_doit} == 'y' ) then
+  set refine_now = "maska_boxa1"
+  source ${proc_2dx}/2dx_refine_unbend1_sub.com
+endif
+#
+if ( ${refine_maska_doit_2} == 'y' ) then
+  set refine_now = "maska"
+  source ${proc_2dx}/2dx_refine_unbend1_sub.com
+endif
+#
+if ( ${refine_boxa1_doit_2} == 'y' ) then
+  set refine_now = "boxa1"
+  source ${proc_2dx}/2dx_refine_unbend1_sub.com
+  set dowarn = 'y'
+endif
+#
+if ( ${refine_maska_doit_3} == 'y' ) then
+  set refine_now = "maska"
+  source ${proc_2dx}/2dx_refine_unbend1_sub.com
+endif
+#
+if ( ${refine_boxa1_doit_3} == 'y' ) then
+  set refine_now = "boxa1"
+  source ${proc_2dx}/2dx_refine_unbend1_sub.com
+  set dowarn = 'y'
+endif
+#
+if ( ${dowarn} == 'y' ) then
+  echo "# WARNING: You are refining the reference size." >> LOGS/${scriptname}.results
+  echo "# WARNING: Warning: A too small reference will give an artificially good QVal due to noise correlation." >> LOGS/${scriptname}.results
+endif
+#
+#################################################################################
+${proc_2dx}/linblock "Doing it again, with the best parameter: maska = ${maska}, boxa1 = ${boxa1}"
+#################################################################################
+#
+set final_round = "y"
+#
+source ${proc_2dx}/2dx_unbend1_sub.com
+#
+#
+echo "<<@progress: 100>"
+#
+##########################################################################
+${proc_2dx}/linblock "${scriptname} - normal end."
+##########################################################################

@@ -1,0 +1,6 @@
+#!/bin/tcsh -ef
+#
+set infile = $1
+#
+${viewerStack_focus_app} ${infile}
+#

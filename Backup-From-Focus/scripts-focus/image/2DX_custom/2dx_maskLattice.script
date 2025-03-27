@@ -1,0 +1,293 @@
+#!/bin/tcsh -ef
+####
+#
+#############################################################################
+#                                                                           #
+# Title: Inverse Fourier Filter (experimental)                              #
+#                                                                           #
+# (C) 2dx.org, GNU Plublic License.                                         #
+#                                                                           #
+# Created..........: 06/27/2011                                             #
+# Last Modification: 06/27/2011                                             #
+# Author...........: 2dx.org                                                #
+#                                                                           #
+#############################################################################
+#
+# SORTORDER: 95
+#
+# MANUAL: This script will inverse Fourier filter a lattice from an FFT of an image. That is, it will delete the lattice spots, leaving only the crystal background.
+#
+# MANUAL: It is intended for projects, where biological samples are imaged on a crystalline support film, as for example a streptavidin 2D crystal or graphene, and the non-crystalline objects are of interest, and the crystalline background is to be deleted. 
+#
+# MANUAL: This script needs the reciprocal lattice to be defined. In addition, if you want not all reciprocal spots but only those spots from a spotlist to be removed, then the spotlist has to be existing.
+#
+# MANUAL: <B>Algorithm:</B><BR>This script creates a synthetic Fourier transform containing AMP-1 and PHASE=0. This is then masked with the MRC program 2dx_masktrana, based on a given lattice and potentially a spotlist, so that the result is a Fourier transform with AMP=1 and PHASE=0 with holes, where the AMP is set to 0. The resulting masked Fourier transform is then inverted, so that the background is zero and the "holes" are 1. The MRC program twofile is then used to multiply this masked-inverted Fourier transform with the Fourier transform of the (non-tapered) input image. The result is back-transformed, to give the final image.    
+#
+# MANUAL: <B>Bugs:</B><BR>The mask shape "Gaussian" does not work.<BR>The final result may have edge effects.<BR>The final result is an MRC format image. If you use MRC2TIF.exe to transform that back into a TIFF file, make sure to verify the handedness of the output TIFF image, because there might be a problem from a non-defined TIFF image origin, which by default in some programs was defined top left, and in some programs is interpreted as bottom left. The result is that if you TIFF2MRC and then MRC2TIFF transform an image, the result is flipped upside down.<BR><BR><I>Please contact Henning.Stahlberg@unibas.ch if you need any of these bugs to be removed.</I><BR>
+#
+# DISPLAY: imagename
+# DISPLAY: nonmaskimagename
+# DISPLAY: imagenumber
+# DISPLAY: imagesidelength
+# DISPLAY: magnification
+# DISPLAY: stepdigitizer
+# DISPLAY: lattice
+# DISPLAY: secondlattice
+# DISPLAY: tempkeep
+# DISPLAY: comment
+# DISPLAY: invmask_radius
+# DISPLAY: invmask_type
+# DISPLAY: invmask_spots
+# DISPLAY: invmask_lattice
+#
+#$end_local_vars
+#
+set bin_2dx = ""
+set proc_2dx = ""
+#
+set imagename = ""
+set nonmaskimagename = ""
+set imagenumber = ""
+set imagesidelength = ""
+set magnification = ""
+set stepdigitizer = ""
+set lattice = ""
+set secondlattice = ""
+set tempkeep = ""
+set invmask_radius = ""
+set invmask_type = ""
+set invmask_spots = ""
+set invmask_lattice = ""
+#
+#$end_vars
+#
+echo "<<@progress: 1>>"
+#
+set ccp4_setup = 'y'
+set IS_2DX = yes
+source ${proc_2dx}/initialize
+#
+set scriptname = 2dx_maskLattice
+\rm -f LOGS/${scriptname}.results
+#
+set date = `date`
+echo date = ${date}
+echo invmask_radius = ${invmask_radius}
+echo invmask_type = ${invmask_type}
+echo invmask_lattice = ${invmask_lattice}
+#
+echo "# IMAGE: ${nonmaskimagename}.mrc <nonmasked image>" >> LOGS/${scriptname}.results
+#
+set halimsidelen = `echo ${imagesidelength} | awk '{ s = int( $1 / 2 ) } END { print s }'`
+#
+  #############################################################################
+  #                                                                           #
+  ${proc_2dx}/linblock "FFTTRANS - to calculate FFT of raw image"
+  #                                                                           #
+  #############################################################################
+  #
+  \rm -f SCRATCH/${nonmaskimagename}_notaper_fft.mrc
+  setenv IN  ${nonmaskimagename}.mrc
+  setenv OUT  SCRATCH/${nonmaskimagename}_notaper_fft.mrc
+  ${bin_2dx}/2dx_fftrans.exe  
+  #
+  echo "# IMAGE-IMPORTANT: SCRATCH/${nonmaskimagename}_notaper_fft.mrc <FFT of nontapered image>" >> LOGS/${scriptname}.results
+  #
+  #
+  #############################################################################
+  ${proc_2dx}/linblock "LABEL - to create flat value=1 FFT file"
+  #############################################################################
+  #
+  \rm -f SCRATCH/TMPvalue1_fft.mrc
+  #
+  ${bin_2dx}/labelh.exe << eot
+SCRATCH/${nonmaskimagename}_notaper_fft.mrc
+9               ! Fill FFT with Amplitude
+SCRATCH/TMPvalue1_fft.mrc
+1.0
+eot
+  #
+  echo "# IMAGE: SCRATCH/TMPvalue1_fft.mrc <Value 1 FFT>" >> LOGS/${scriptname}.results
+  echo "<<@progress: 10>>"
+  #
+  #
+  #############################################################################
+  ${proc_2dx}/linblock "MASKTRAN - to delete spots of lattice"
+  #############################################################################
+  #
+  setenv IN  SCRATCH/TMPvalue1_fft.mrc
+  setenv OUT SCRATCH/TMPvalue1_msk_fft.mrc
+  setenv SPOTS ${nonmaskimagename}.spt
+  #
+  \rm -f SCRATCH/TMPvalue1_msk_fft.mrc
+  set rmax = 11000
+  echo rmax = ${rmax}
+  if ( ${invmask_type} == "0" ) then
+    set ishape = 1
+    set radius = ${invmask_radius}
+  endif
+  if ( ${invmask_type} == "1" ) then
+    set ishape = 2
+    set radius = ${invmask_radius}
+  endif
+  if ( ${invmask_type} == "2" ) then
+    set ishape = 3
+    set radius = "${invmask_radius},${invmask_radius}"
+  endif
+  #
+  if ( ${invmask_spots} == "0" ) then
+    set itype = 1
+  endif
+  if ( ${invmask_spots} == "1" ) then
+    set itype = 0
+  endif
+  #
+  if ( ${invmask_lattice} == "0" ||  ${invmask_lattice} == "2" ) then
+    echo ":: Masking with first lattice: Now launching masktrana with:" 
+    cat << eof
+::  ${bin_2dx}/2dx_masktrana.exe << eot
+:: ${ishape} F T F ! ISHAPE=1(CIRC),2(GAUSCIR),3(RECT)HOLE,IAMPLIMIT(T or F),ISPOT,IFIL
+:: ${radius}       ! RADIUS OF HOLE IF CIRCULAR, X,Y HALF-EDGE-LENGTHS IF RECT.
+:: ${lattice} -50 50 -50 50 ${rmax} ${itype} !A/B X/Y,IH/IK MN/MX,RMAX,ITYPE
+:: eot
+eof
+    #
+    ${bin_2dx}/2dx_masktrana.exe << eot
+${ishape} F T F ! ISHAPE=1(CIRC),2(GAUSCIR),3(RECT)HOLE,IAMPLIMIT(T or F),ISPOT,IFIL
+${radius}       ! RADIUS OF HOLE IF CIRCULAR, X,Y HALF-EDGE-LENGTHS IF RECT.
+${lattice} -50 50 -50 50 ${rmax} ${itype} !A/B X/Y,IH/IK MN/MX,RMAX,ITYPE
+eot
+    #
+  endif
+  #
+  if ( ${invmask_lattice} == "1" ) then
+    echo ":: Masking with second lattice: Now launching masktrana with:" 
+    cat << eof
+::  ${bin_2dx}/2dx_masktrana.exe << eot
+:: ${ishape} F T F ! ISHAPE=1(CIRC),2(GAUSCIR),3(RECT)HOLE,IAMPLIMIT(T or F),ISPOT,IFIL
+:: ${radius}       ! RADIUS OF HOLE IF CIRCULAR, X,Y HALF-EDGE-LENGTHS IF RECT.
+:: ${secondlattice} -50 50 -50 50 ${rmax} ${itype} !A/B X/Y,IH/IK MN/MX,RMAX,ITYPE
+:: eot
+eof
+    #
+    ${bin_2dx}/2dx_masktrana.exe << eot
+${ishape} F T F ! ISHAPE=1(CIRC),2(GAUSCIR),3(RECT)HOLE,IAMPLIMIT(T or F),ISPOT,IFIL
+${radius}       ! RADIUS OF HOLE IF CIRCULAR, X,Y HALF-EDGE-LENGTHS IF RECT.
+${secondlattice} -50 50 -50 50 ${rmax} ${itype} !A/B X/Y,IH/IK MN/MX,RMAX,ITYPE
+eot
+    #
+  endif
+  #
+  echo "# IMAGE: SCRATCH/TMPvalue1_msk_fft.mrc <Masked Value 1 FFT>" >> LOGS/${scriptname}.results
+  #
+  if ( ${invmask_lattice} == "2" ) then
+    setenv IN  SCRATCH/TMPvalue1_fft.mrc
+    setenv OUT SCRATCH/TMPvalue1_msk2_fft.mrc
+    \rm -f SCRATCH/TMPvalue1_msk2_fft.mrc
+    echo ":: Masking also with second lattice: Now launching masktrana with:" 
+    cat << eof
+::  ${bin_2dx}/2dx_masktrana.exe << eot
+:: ${ishape} F T F ! ISHAPE=1(CIRC),2(GAUSCIR),3(RECT)HOLE,IAMPLIMIT(T or F),ISPOT,IFIL
+:: ${radius}       ! RADIUS OF HOLE IF CIRCULAR, X,Y HALF-EDGE-LENGTHS IF RECT.
+:: ${secondlattice} -50 50 -50 50 ${rmax} ${itype} !A/B X/Y,IH/IK MN/MX,RMAX,ITYPE
+:: eot
+eof
+    #
+    ${bin_2dx}/2dx_masktrana.exe << eot
+${ishape} F T F ! ISHAPE=1(CIRC),2(GAUSCIR),3(RECT)HOLE,IAMPLIMIT(T or F),ISPOT,IFIL
+${radius}       ! RADIUS OF HOLE IF CIRCULAR, X,Y HALF-EDGE-LENGTHS IF RECT.
+${secondlattice} -50 50 -50 50 ${rmax} ${itype} !A/B X/Y,IH/IK MN/MX,RMAX,ITYPE
+eot
+    #
+    echo "# IMAGE: SCRATCH/TMPvalue1_msk2_fft.mrc <Second masked Value 1 FFT>" >> LOGS/${scriptname}.results
+  endif
+  echo "<<@progress: 40>>"
+  #
+  #############################################################################
+  ${proc_2dx}/linblock "LABEL - to invert masked FFT pattern"
+  #############################################################################
+  #
+  \rm -f SCRATCH/TMPvalue2_fft.mrc
+  #
+  ${bin_2dx}/labelh.exe << eot
+SCRATCH/TMPvalue1_msk_fft.mrc
+2               ! Linear OD stretch  ( y = mx + b )
+SCRATCH/TMPvalue2_fft.mrc
+-1.0 1.0
+0
+eot
+  #
+  echo "# IMAGE: SCRATCH/TMPvalue2_fft.mrc <Inverted masked Value 1 FFT>" >> LOGS/${scriptname}.results
+  echo "<<@progress: 50>>"
+  #
+  if ( ${invmask_lattice} == "2" ) then
+    \rm -f SCRATCH/TMPvalue2_2_fft.mrc
+    #
+    ${bin_2dx}/labelh.exe << eot
+SCRATCH/TMPvalue1_msk2_fft.mrc
+2               ! Linear OD stretch  ( y = mx + b )
+SCRATCH/TMPvalue2_2_fft.mrc
+-1.0 1.0
+0
+eot
+    #
+    echo "# IMAGE: SCRATCH/TMPvalue2_2_fft.mrc <Second inverted masked Value 1 FFT>" >> LOGS/${scriptname}.results
+  endif
+  #
+  #############################################################################
+  ${proc_2dx}/linblock "TWOFILE - to multiply masked pattern with FFT of image"
+  #############################################################################
+  #
+  setenv IN1 SCRATCH/${nonmaskimagename}_notaper_fft.mrc
+  setenv IN2 SCRATCH/TMPvalue2_fft.mrc
+  setenv OUT SCRATCH/${nonmaskimagename}_invmask_fft.mrc
+  ${bin_2dx}/2dx_twofile.exe << eot
+1               ! ICOMB (multiply together)
+2 0 0 ${halimsidelen} ${halimsidelen} ! IORIGIN,OXA,OYA,OXB,OYB  Origin shifts to FFTs
+eot
+  #
+  if ( ${invmask_lattice} == "2" ) then
+    \rm -f SCRATCH/${nonmaskimagename}_invmask_1_fft.mrc
+    \mv -f SCRATCH/${nonmaskimagename}_invmask_fft.mrc SCRATCH/${nonmaskimagename}_invmask_1_fft.mrc
+    setenv IN1 SCRATCH/${nonmaskimagename}_invmask_1_fft.mrc
+    setenv IN2 SCRATCH/TMPvalue2_2_fft.mrc
+    setenv OUT SCRATCH/${nonmaskimagename}_invmask_fft.mrc
+    ${bin_2dx}/2dx_twofile.exe << eot
+1               ! ICOMB (multiply together)
+2 0 0 ${halimsidelen} ${halimsidelen} ! IORIGIN,OXA,OYA,OXB,OYB  Origin shifts to FFTs
+eot
+    #
+  endif
+  echo "<<@progress: 60>>"
+  #
+  echo "# IMAGE-IMPORTANT: SCRATCH/${imagename}_invmask_fft.mrc <InvMasked FFT of image>" >> LOGS/${scriptname}.results
+  #
+  #############################################################################
+  #                                                                           #
+  ${proc_2dx}/linblock "FFTTRANS - to calculate Fourier filtered image"
+  #                                                                           #
+  #############################################################################
+  #
+  \rm -f SCRATCH/${nonmaskimagename}_invflt.mrc
+  setenv IN  SCRATCH/${nonmaskimagename}_invmask_fft.mrc
+  setenv OUT SCRATCH/${nonmaskimagename}_invflt.mrc
+  ${bin_2dx}/2dx_fftrans.exe  
+  #
+  echo "# IMAGE-IMPORTANT: SCRATCH/${nonmaskimagename}_invflt.mrc <Inverse Fourier-filtered Image>" >> LOGS/${scriptname}.results
+  #
+  if ( ${tempkeep} == "n" ) then
+    \rm -f SCRATCH/${nonmaskimagename}_invmask_1_fft.mrc
+    \rm -f SCRATCH/TMPvalue2_fft.mrc
+    \rm -f SCRATCH/TMPvalue2_2_fft.mrc
+    \rm -f SCRATCH/TMPvalue1_msk_fft.mrc
+    \rm -f SCRATCH/TMPvalue1_msk2_fft.mrc
+  endif
+  #
+  echo "<<@progress: 100>>"
+  ##########################################################################
+  ${proc_2dx}/linblock "${scriptname} - normal end."
+  ##########################################################################
+  #
+endif
+#
+  

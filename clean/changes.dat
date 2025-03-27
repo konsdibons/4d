@@ -1,0 +1,22 @@
+######1.1.0-96ca29ed######
+VERSION:1.1.0
+STATE:Under Development
+FIXED:Importing the TIFF gain corrected files
+-----
+VERSION:1.0.0
+STATE:Released
+ADDED:Tomography data collection using Hagen scheme
+ADDED:Single particle refinement for 2D electron crystallography improved
+ADDED:CTFFIND4 can be employed for CTF determination after drift correction
+ADDED:CCValue graphs added to the status page
+ADDED:Scripts improved
+FIXED:Crash fixes in project library
+FIXED:Merging scripts debugged for 2D electron crystallography
+-----
+VERSION:0.9.1
+STATE:Pre-Release
+ADDED:First implementation of the Focus package
+ADDED:Contains features like import tool, parallel processing tool
+ADDED:Various modes can be set depending on the type of the project
+FIXED:None
+-----

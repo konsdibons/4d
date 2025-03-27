@@ -1,0 +1,403 @@
+#!/bin/tcsh -ef
+####
+#
+#############################################################################
+#                                                                           #
+# Title: Generate Map                                                       #
+#                                                                           #
+# (C) 2dx.org, GNU Plublic License.                                         #
+#                                                                           #
+# Created..........: 02/20/2006                                             #
+# Last Modification: 02/20/2006                                             #
+# Author...........: 2dx.org                                                #
+#                                                                           #
+#############################################################################
+#
+# SORTORDER: 90
+#
+# REMARK: The following section defines the text in the Manual pane of the GUI:
+# MANUAL: This script makes use of CCP4 commands to generate the final projection map.
+# MANUAL: The final output is an MRC-format image file that shows 2x2 unit cells. 
+# MANUAL: The PostScript output file is skewed according to any potential non-square non-rectangular lattice, while the MRC-format file has the skewing information stored in the header.
+#
+#
+# PUBLICATION: 2dx - User-friendly image processing for 2D crystals: <A HREF="http://dx.doi.org/10.1016/j.jsb.2006.07.020">J. Struct. Biol. 157 (2007) 64-72</A>
+# PUBLICATION: Image processing of 2D crystal images: <A HREF="http://link.springer.com/protocol/10.1007%2F978-1-62703-176-9_10">Methods in Molecular Biology (2012)</A>
+#
+# REMARK: The following section defines variables that will be displayed in the GUI:
+#
+# RESET: show_hkl = "n"
+# RESET: show_phares = "n"
+# RESET: show_PSF = "n"
+#
+# DISPLAY: RESMAX
+# DISPLAY: RESMIN
+# DISPLAY: ALAT
+# DISPLAY: tempfac
+# DISPLAY: SYM
+# DISPLAY: phaori
+# DISPLAY: phaoriFouFilter
+# DISPLAY: zstarrange
+# DISPLAY: zstarrange_real
+# DISPLAY: Calc_from_zstarrange
+# DISPLAY: ctfrev
+# DISPLAY: realang
+# DISPLAY: realcell
+# DISPLAY: rot90
+# DISPLAY: rot180
+# DISPLAY: revhk
+# DISPLAY: revhnd
+# DISPLAY: sgnxch
+# DISPLAY: revxsgn
+# DISPLAY: tempkeep
+# DISPLAY: comment
+# DISPLAY: npo_cntrs_step
+# DISPLAY: npo_cntrs_below 
+# DISPLAY: MergeIQMAX
+# DISPLAY: mapdimpx
+#
+# REMARK: The following section defines the variables that the GUI will fill in from the database, before launching this script:
+#$end_local_vars
+#
+set bin_2dx = ""
+set proc_2dx = ""
+#
+set SYN_Unbending = ""
+set PHASEORI_done = ""
+#
+set SYN_Unbending = ""
+set imagename = ""
+set nonmaskimagename = ""
+set imagenumber = ""
+set imagesidelength = ""
+set tempkeep = ""
+set RESMIN = ""
+set RESMAX = ""
+set phacon = ""
+set CS = ""
+set KV = ""
+set ALAT = ""
+set lattice = ""
+set realang = ""
+set realcell = ""
+set magnification = ""
+set stepdigitizer = ""
+set TLTAXIS = ""
+set TLTANG = ""
+set TLTAXA = ""
+set TAXA = ""
+set TANGL = ""
+set phaori = ""
+set phaoriFouFilter = ""
+set rot180 = ""
+set revhk = ""
+set rot90 = ""
+set revhnd = ""
+set sgnxch = ""
+set revxsgn = ""
+set ctfrev = ""
+set beamtilt = ""
+set zstarrange = ""
+set Calc_from_zstarrange = ""
+set zstarrange_real = ""
+set tempfac = ""
+set TAXA = ""
+set TANGL = ""
+set ML_doit = ""
+set SYM = ""
+set npo_cntrs_step = ""
+set npo_cntrs_below = ""
+set MergeIQMAX = ""
+set movie_enable = ""
+set ctfcor_imode = ""
+set RFACAMP = ""
+set show_hkl = ""
+set show_phares = ""
+set show_PSF = ""
+set mapdimpx = ""
+#
+#
+#$end_vars
+#
+echo "<<@progress: 1>>"
+#
+set ccp4_setup = 'y'
+set IS_2DX = yes
+source ${proc_2dx}/initialize
+#
+set scriptname = 2dx_generateMAP
+#
+\rm -f LOGS/${scriptname}.results
+#
+echo "<<@evaluate>>"
+#
+set date = `date`
+echo date = ${date}
+#
+if ( x${TLTAXIS} == "x-" || x${TLTAXIS} == "x--" ) then
+  set TLTAXIS = "0.0"
+endif
+if ( x${TLTANG} == "x-" || x${TLTANG} == "x--" ) then
+  set TLTANG = "0.0"
+endif
+if ( x${TLTAXA} == "x-" || x${TLTAXA} == "x--" ) then
+  set TLTAXA = "0.0"
+endif
+if ( x${TAXA} == "x-" || x${TAXA} == "x--" ) then
+  set TAXA = "0.0"
+endif
+if ( x${TANGL} == "x-" || x${TANGL} == "x--" ) then
+  set TANGL = "0.0"
+endif
+#
+set iname = image_ctfcor
+#
+echo "# IMAGE-IMPORTANT: ${nonmaskimagename}_raw.mrc <RAW Non-Masked Image>" >> LOGS/${scriptname}.results
+if ( ${nonmaskimagename} != ${imagename} ) then
+  echo "# IMAGE-IMPORTANT: ${imagename}.mrc <Image>"  >> LOGS/${scriptname}.results
+endif
+echo "# IMAGE-IMPORTANT: ${nonmaskimagename}.mrc <Non-Masked Image>" >> LOGS/${scriptname}.results
+#
+if ( ${Calc_from_zstarrange} == "y" ) then
+  set zstarrange_real = `echo ${zstarrange} ${ALAT} | awk '{ s = 1.0 / ( $1 ) } END { print s }'`
+  echo "set zstarrange_real = ${zstarrange_real}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "Calculating vertical resolution as ${zstarrange_real} Angstroems."
+else
+  set zstarrange = `echo ${zstarrange_real} ${ALAT} | awk '{ s = 1.0 / ( $1 ) } END { print s }'`
+  echo "set zstarrange = ${zstarrange}" >> LOGS/${scriptname}.results   
+  ${proc_2dx}/linblock "Calculating zstarrange as ${zstarrange} (with 0.5 = Nyquist resolution)."
+endif
+#
+set ABANG = `echo $realang | awk '{s=180-$1} END {print s}'`
+echo ABANG = ${ABANG}
+set IAQP2 = 0
+set IVERBOSE = 1
+set LOGOUTPUT = F
+set LPROTFOUFIL = T
+set LUSEML = F
+set phastepnum = 1
+set phastep = 0.1
+#
+#############################################################################
+#
+set SYM_sub = 'p1'
+set spcgrp = "1"
+set spcgroup_num = "1"
+set CCP4_SYM = "1"
+set ML_sym_val = "1"
+#
+set symmetry = 'p1'
+set spcgrp_local = 1
+set CCP4_SYM = 1
+set rotate_to_Z = "no"
+#
+# origtilt does something strange when working with spcgrp>1. (TODO).
+# Symmetrization is therefore here only done by the CCP4 programs.
+#
+set spcgrp_first = 1
+echo spcgrp_first = ${spcgrp_first}
+#
+echo spcgrp = ${spcgrp}
+echo SYM_sub = ${SYM_sub}
+echo CCP4_SYM = ${CCP4_SYM}
+echo rotate_to_Z = ${rotate_to_Z}
+#
+#
+#############################################################################
+echo ":: "
+${proc_2dx}/linblock "Sourcing generateMap script for Unbending reconstruction in p1 symmetry"
+echo ":: "
+#############################################################################
+#############################################################################
+#############################################################################
+#
+set aphfile = APH/${iname}_fou_unbent_ctf.aph
+#
+# A check in case somebody just upgraded from an earlier version of 2dx:
+if ( ! -e ${aphfile} ) then
+  if ( -e APH/${imagename}_ctf.aph ) then
+    \cp APH/${imagename}_ctf.aph ${aphfile}
+  endif
+endif
+#
+if ( ${show_hkl}x == "yx" ) then
+  echo "# IMAGE: ${aphfile} <APH: Input Unbending Amp&Phase File [H,K,A,P(CTF Phase flipped),IQ,Back,CTF]>" >> LOGS/${scriptname}.results
+endif
+echo "# IMAGE: PS/${iname}-quadserch2b.ps <PS: Vector Plot of distortions 2>" >> LOGS/${scriptname}.results
+echo "# IMAGE: PS/${iname}_ctf.ps <PS: IQ Plot after CTF correction>" >> LOGS/${scriptname}.results
+#
+# echo "# IMAGE: frame_quadserch.ps <PS: QUADSERCH Movie Profiles>" >> LOGS/${scriptname}.results
+# echo "# IMAGE: frame_unbending.ps <PS: CCUNBEND Movie Profiles>" >> LOGS/${scriptname}.results
+set prefix = ""
+set prename = "Unb.II "
+#
+set phaorix = `echo ${phaori} | cut -d\, -f1 | awk '{ s =  $1 } END { print s }'`
+set phaoriy = `echo ${phaori} | cut -d\, -f2 | awk '{ s =  $1 } END { print s }'`
+set phaori_local = `echo ${phaorix},${phaoriy}`
+#############################################################################
+# Unbend II
+source ${proc_2dx}/2dx_generateMap_sub.com
+#############################################################################
+#
+echo "<<@progress: 10>>"
+#
+#
+# Synthetic Unbending result is used:
+# set aphfile = APH/${iname}_U2-Syn_ctf.aph
+# if ( -e ${aphfile} ) then
+#     echo ":: "
+#     ${proc_2dx}/linblock "Generating map from U2-Syn unbending"
+#     echo ":: "
+#     if ( ${show_hkl}x == "yx" ) then
+#       echo "# IMAGE: ${aphfile} <APH: Amp&Phase from U2-Syn unbending>" >> LOGS/${scriptname}.results
+#     endif
+#     set prefix = "U2-Syn_"
+#     set prename = "U2-Syn "
+#     #
+#     set phaori_local = ${phaori}
+#     #############################################################################
+#     # U2-Syn
+#     source ${proc_2dx}/2dx_generateMap_sub.com
+#     #############################################################################
+# else
+#     ${proc_2dx}/lin "Not generating map from U2-Syn processing, file not found: ${aphfile}"
+# endif
+#
+#
+echo "<<@progress: 20>>"
+#
+#
+set aphfile = APH/ML_result.aph
+if ( -e ${aphfile} && ( 1 == 2 ) ) then
+  echo ":: "
+  ${proc_2dx}/linblock "Sourcing generateMap script for ML reconstruction in p1 symmetry"
+  echo ":: "
+  if ( ${show_hkl}x == "yx" ) then
+    echo "# IMAGE: ${aphfile} <APH: ML Input Amp&Phase File>" >> LOGS/${scriptname}.results
+  endif
+  set prefix = "ML_"
+  set prename = "ML "
+  #
+  set phaori_local = "0.0,0.0"
+  #############################################################################
+  # ML
+  source ${proc_2dx}/2dx_generateMap_sub.com
+  #############################################################################
+  #
+endif
+#
+echo "<<@progress: 30>>"
+#
+set aphfile = APH/${iname}_movie_fou_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from MA processing"
+    echo ":: "
+    if ( ${show_hkl}x == "yx" ) then
+      echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MA processing>" >> LOGS/${scriptname}.results
+    endif
+    set prefix = "movie_"
+    set prename = "MA "
+    #
+    set phaori_local = ${phaori}
+    #############################################################################
+    # Movie A
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from MA processing, file not found: ${aphfile}"
+endif
+#
+echo "<<@progress: 40>>"
+#
+# set aphfile = APH/${iname}_movie_syn_ctf.aph
+# if ( -e ${aphfile} ) then
+#       echo ":: "
+#       ${proc_2dx}/linblock "Generating map from MA U2-Syn processing"
+#       echo ":: "
+#       if ( ${show_hkl}x == "yx" ) then
+#         echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MA U2-Syn processing>" >> LOGS/${scriptname}.results
+#       endif
+#       set prefix = "movie_syn_"
+#       set prename = "MA_Syn "
+#       #
+#       set phaori_local = ${phaori}
+#       #############################################################################
+#       # Movie A U2-Syn
+#       source ${proc_2dx}/2dx_generateMap_sub.com
+#       #############################################################################
+# else
+#       ${proc_2dx}/lin "Not generating map from MA U2-Syn processing, file not found: ${aphfile}"
+# endif
+#
+echo "<<@progress: 50>>"
+#
+set aphfile = APH/${iname}_movieB_fou_ctf.aph
+if ( -e ${aphfile} ) then
+    echo ":: "
+    ${proc_2dx}/linblock "Generating map from MB processing"
+    echo ":: "
+    if ( ${show_hkl}x == "yx" ) then
+      echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MB processing>" >> LOGS/${scriptname}.results
+    endif 
+    set prefix = "movieB_"
+    set prename = "MB "
+    #
+    set phaori_local = ${phaori}
+    #############################################################################
+    # Movie B
+    source ${proc_2dx}/2dx_generateMap_sub.com
+    #############################################################################
+else
+    ${proc_2dx}/lin "Not generating map from MB processing, file not found: ${aphfile}"
+endif
+#
+echo "<<@progress: 60>>"
+#
+# set aphfile = APH/${iname}_movieB_syn_ctf.aph
+# if ( -e ${aphfile} ) then
+#       echo ":: "
+#       ${proc_2dx}/linblock "Generating map from MB U2-Syn processing"
+#       echo ":: "
+#       if ( ${show_hkl}x == "yx" ) then
+#         echo "# IMAGE: ${aphfile} <APH: Amp&Phase from MB U2-Syn processing>" >> LOGS/${scriptname}.results
+#       endif
+#       set prefix = "movieB_syn_"
+#       set prename = "MB_Syn "
+#       #
+#       set phaori_local = ${phaori}
+#       #############################################################################
+#       # Movie B U2-Syn
+#       source ${proc_2dx}/2dx_generateMap_sub.com
+#       #############################################################################
+# else
+#       ${proc_2dx}/lin "Not generating map from MB U2-Syn processing, file not found: ${aphfile}"
+# endif
+#
+echo ":: "
+#
+if ( ! -e ${nonmaskimagename}_ref.mrc ) then
+  if ( -e ${imagename}_ref.mrc ) then
+    \mv -f ${imagename}_ref.mrc ${nonmaskimagename}_ref.mrc 
+  endif
+endif
+echo "# IMAGE-IMPORTANT: ${nonmaskimagename}_ref.mrc <Projected Reference>"  >> LOGS/${scriptname}.results
+#
+#############################################################################
+#############################################################################
+#############################################################################
+#
+echo ":: Done."
+echo "<<@progress: 100>>"
+#
+##########################################################################
+${proc_2dx}/linblock "${scriptname} - normal end."
+##########################################################################
+#
+exit
+##
+# Just to make sure it is displayed in the 2dx GUI:
+source ${proc_2dx}/2dx_checklattice_sub.com 
+#
+#
+

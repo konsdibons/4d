@@ -1,0 +1,344 @@
+#!/bin/tcsh -ef
+####
+#
+#############################################################################
+#                                                                           #
+# Title: Unbend Syn                                                         #
+#                                                                           #
+# (C) 2dx.org, GNU Plublic License.                                         #
+#                                                                           #
+# Created..........: 02/20/2006                                             #
+# Last Modification: 02/23/2015                                             #
+# Author...........: 2dx.org                                                #
+#                                                                           #
+#############################################################################
+#
+# MANUAL: This script will do the image unbending with a synthetically generated reference. 
+#
+# MANUAL: WE STRONGLY ADVISE AGAINST THIS, AS THIS BEARS A STRONG RISK OF REFERENCE BIAS, WHICH MAKES YOUR STATISTICS LOOK NICE, BUT PREVENTS AXESS TO HIGH-RESOLUTION DATA. PLEASE CONSULT WITH THE DEVELOPER TEAM IF YOU HAVE QUESTIONS.
+#
+# MANUAL: You can only use this script, after the conventional image processing with lattice and defocus determination, and unbending with Unbending-I and Unbending-II has been done, and a phase origin for merging has been determined. Only then, the synthetical reference can be created with the correct defocus, tilt and phase origin.
+#
+# MANUAL: The reference should be the result of a merging process, and should be reachable for a 2D merge dataset under "../merge/merge2D_MRClefthanded.mtz" or "../../merge/merge2D_MRClefthanded.mtz" or for a 3D merge dataset under "../merge/merge3D_MRClefthanded.mtz" or "../../merge/merge3D_MRClefthanded.mtz".
+#
+#
+# SORTORDER: 101
+#
+# DISPLAY: SYN_Unbending
+# DISPLAY: SYN_Bfact1
+# DISPLAY: SYN_Bfact2
+# DISPLAY: SYN_maska
+# DISPLAY: SYN_maskb
+# DISPLAY: SYN_facthresha
+# DISPLAY: SYN_quadrada
+# DISPLAY: SYN_quadradb
+# DISPLAY: SYN_quadpreda
+# DISPLAY: SYN_quadpredb
+# DISPLAY: RESMAX
+# DISPLAY: RESMIN
+# DISPLAY: ALAT
+# DISPLAY: TAXA
+# DISPLAY: TANGL
+# DISPLAY: radlim
+# DISPLAY: domask
+# DISPLAY: treatspotscan
+# DISPLAY: ctfplotresmax
+# DISPLAY: tempkeep
+# DISPLAY: createmaskinfo
+# DISPLAY: ISTEP
+# DISPLAY: IMAXCOR
+# DISPLAY: ctfrev
+# DISPLAY: realang
+# DISPLAY: realcell
+# DISPLAY: rot90
+# DISPLAY: rot180
+# DISPLAY: revhk
+# DISPLAY: revhnd
+# DISPLAY: sgnxch
+# DISPLAY: revxsgn
+# DISPLAY: beamtilt
+# DISPLAY: phaori
+# DISPLAY: phaoriFouFilter
+# DISPLAY: do3quadserch
+# DISPLAY: comment
+# DISPLAY: RMAG
+# DISPLAY: LCOLOR
+#
+#$end_local_vars
+#
+#
+set bin_2dx = ""
+set proc_2dx = ""
+#
+set ALAT = ""
+set CS = ""
+set IMAXCOR = ""
+set ISTEP = ""
+set KV = ""
+set LCOLOR = ""
+set PHASEORI_done = ""
+set RESMAX = ""
+set RESMIN = ""
+set RMAG = ""
+set SYM = ""
+set SYN_Bfact1 = ""
+set SYN_Bfact2 = ""
+set SYN_Unbending = ""
+set SYN_facthresha = ""
+set SYN_maska = ""
+set SYN_maskb = ""
+set SYN_quadpreda = ""
+set SYN_quadpredb = ""
+set SYN_quadrada = ""
+set SYN_quadradb = ""
+set TANGL = ""
+set TAXA = ""
+set TLTANG = ""
+set TLTAXA = ""
+set TLTAXIS = ""
+set beamtilt = ""
+set boxb1 = ""
+set boxb2 = ""
+set createmaskinfo = ""
+set ctfcor_imode = ""
+set ctfplotresmax = ""
+set ctfrev = ""
+set defocus = ""
+set det_tilt = ""
+set do3quadserch = ""
+set domask = ""
+set facthresha = ""
+set imagename = ""
+set imagenumber = ""
+set imagesidelength = ""
+set lattice = ""
+set magnification = ""
+set nonmaskimagename = ""
+set phacon = ""
+set phaori = ""
+set phaoriFouFilter = ""
+set quadpredb = ""
+set quadradb = ""
+set radlim = ""
+set realang = ""
+set realcell = ""
+set revhk = ""
+set revhnd = ""
+set revxsgn = ""
+set rot180 = ""
+set rot90 = ""
+set sgnxch = ""
+set stepdigitizer = ""
+set stepdigitizer = ""
+set tempkeep = ""
+set treatspotscan = ""
+#
+#$end_vars
+#
+set scriptname = 2dx_unbendSyn
+\rm -f LOGS/${scriptname}.results
+#
+set IS_2DX = yes
+source ${proc_2dx}/initialize
+source ${bin_ccp4}/ccp4.setup-csh
+#
+echo "<<@evaluate>>"
+#
+set date = `date`
+echo date = ${date}
+#
+if ( ${phaoriFouFilter} == "0.0,0.0" ) then
+  set ${PHASEORI_done} = "n"
+  echo "PHASEORI_done = ${PHASEORI_done}" >> LOGS/${scriptname}.results
+endif
+if ( ${PHASEORI_done} == "n" ) then
+  ${proc_2dx}/linblock "Skipping. First determine the phase origin from the Fourier-filtered unbending."
+  exit
+endif
+#
+#################################################################################
+${proc_2dx}/linblock "Verifying some parameters"
+#################################################################################
+#
+set tmp1 = `echo ${boxb1} | awk '{s = int( $1 ) } END { print s }'`
+if ( ${tmp1} == ${boxb1} ) then
+  echo boxb1 = ${boxb1}
+else
+  set boxb1 = ${tmp1}
+  echo boxb1 = ${boxb1}
+  echo "set boxb1 = ${boxb1}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "Warning: boxb1 needs to be an integer number. Now corrected." >> LOGS/${scriptname}.results
+  echo "#WARNING: Warning: boxb1 needs to be an integer number. Now corrected." >> LOGS/${scriptname}.results
+endif
+#
+set tmp1 = `echo ${boxb2} | awk '{s = int( $1 ) } END { print s }'`
+if ( ${tmp1} == ${boxb2} ) then
+  echo boxb2 = ${boxb2}
+else
+  set boxb2 = ${tmp1}
+  echo boxb2 = ${boxb2}
+  echo "set boxb2 = ${boxb2}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "Warning: boxb2 needs to be an integer number. Now corrected." >> LOGS/${scriptname}.results
+  echo "#WARNING: Warning: boxb2 needs to be an integer number. Now corrected." >> LOGS/${scriptname}.results
+endif
+#
+set tmp1 = `echo ${SYN_maska} | awk '{s = int( $1 ) } END { print s }'`
+if ( ${tmp1} == ${SYN_maska} ) then
+  echo SYN_maska = ${SYN_maska}
+else
+  set SYN_maska = ${tmp1}
+  echo SYN_maska = ${SYN_maska}
+  echo "set SYN_maska = ${SYN_maska}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "Warning: SYN_maska needs to be an integer number. Now corrected." >> LOGS/${scriptname}.results
+  echo "#WARNING: Warning: SYN_maska needs to be an integer number. Now corrected." >> LOGS/${scriptname}.results
+endif
+#
+set tmp1 = `echo ${SYN_maskb} | awk '{s = int( $1 ) } END { print s }'`
+if ( ${tmp1} == ${SYN_maskb} ) then
+  echo SYN_maskb = ${SYN_maskb}
+else
+  set SYN_maskb = ${tmp1}
+  echo SYN_maskb = ${SYN_maskb}
+  echo "set SYN_maskb = ${SYN_maskb}" >> LOGS/${scriptname}.results
+  ${proc_2dx}/linblock "Warning: SYN_maskb needs to be an integer number. Now corrected." >> LOGS/${scriptname}.results
+  echo "#WARNING: Warning: SYN_maskb needs to be an integer number. Now corrected." >> LOGS/${scriptname}.results
+endif
+#
+echo "<<@progress: 1>>"
+#
+set startname = `echo ${imagename} | cut -c1`
+if ( $domask == 'y' ) then
+  if ( ${startname} == 'm' ) then
+    set domask = 'n'
+    echo domask corrected to ${domask}
+  endif
+endif
+#
+if ( ${createmaskinfo} == 'y' ) then
+  if ( ${startname} == 'm' ) then
+    # set createmaskinfo = 'n'
+    ${proc_2dx}/linblock "Creating another MASKINFO, but image is already masked."
+  endif
+endif
+#
+set quadradbx = `echo ${quadradb} | sed 's/,/ /g' | awk '{ s = int( $1 ) } END { print s }'`
+set quadradby = `echo ${quadradb} | sed 's/,/ /g' | awk '{ s = int( $2 ) } END { print s }'`
+#
+#################################################################################
+#
+if ( ${boxb1} > ${imagesidelength} ) then
+  ${proc_2dx}/linblock "WARNING: boxb1 too large."
+endif
+#  
+if ( ${boxb2} > ${imagesidelength} ) then
+  ${proc_2dx}/linblock "WARNING: boxb2 too large."
+endif
+#  
+if ( ${treatspotscan} == 'y' ) then
+  set valspotscan = '1'
+else
+  set valspotscan = '0'
+endif
+#
+set rmax = 11000
+echo rmax = ${rmax}
+#
+#
+# set RESPLOTMAX = 0.3
+set RESPLOTMAX = `echo ${ctfplotresmax} | awk '{ if ( $1 > 0.1 ) { s = 1.0 / $1 } else { s = 0.3 } } END { print s }'`
+# 0.3 corresponds to 3.33 Angstroem for the border of the plot.
+#
+if ( ! -d SCRATCH ) then
+  ${proc_2dx}/protest "ERROR: SCRATCH does not exist."
+endif
+#
+set istilt = `echo $TLTANG | awk '{if ( -25.0 < $1 && $1 < 25.0 ) {s = 0} else {s = 1}} END {print s}'`
+echo istilt = $istilt
+#
+if ( ${istilt} == '0' ) then
+  set istilt = 'n'
+else
+  set istilt = 'y'
+endif
+#
+set issometilt = `echo $TLTANG | awk '{if ( -5.0 < $1 && $1 < 5.0 ) {s = 0} else {s = 1}} END {print s}'`
+echo issometilt = $issometilt
+#
+if ( ${issometilt} == '0' ) then
+  set issometilt = 'n'
+  echo ":: Untilted."
+else
+  set issometilt = 'y'
+  if ( ${istilt} == "y" ) then
+    echo ":: Tilted."
+  else
+    echo ":: Tilted, but treating as untilted."
+  endif
+endif
+#
+set u1 = `echo ${lattice} | cut -d\, -f1`
+set u2 = `echo ${lattice} | cut -d\, -f2`
+set v1 = `echo ${lattice} | cut -d\, -f3`
+set v2 = `echo ${lattice} | cut -d\, -f4`
+set ulen = `echo ${u1} ${u2} | awk '{ s = sqrt ( $1 * $1 + $2 * $2 ) } END { print s }'`
+set vlen = `echo ${v1} ${v2} | awk '{ s = sqrt ( $1 * $1 + $2 * $2 ) } END { print s }'`
+#
+set newmaska = `echo ${ulen} ${vlen} ${SYN_maska} | awk '{ if ( $1 / 2 < $3 ) { s = int( $1 / 2 ) } else { if ( $2 / 2 < $3 ) { s = int( $2 / 2 ) } else { s = $3 }}} END { print s }'`
+set newmaska = `echo ${newmaska} | awk '{ if ( $1 < 2 ) { s = 2 } else { s = $1 }} END { print s }'`
+if ( ${SYN_maska} != ${newmaska} ) then
+  ${proc_2dx}/linblock "correcting SYN_maska from ${SYN_maska} to ${newmaska}"
+  set SYN_maska = ${newmaska}
+  echo "set SYN_maska = ${newmaska}" >> LOGS/${scriptname}.results
+endif
+${proc_2dx}/linblock "Using SYN_maska=${SYN_maska} for lattice of length u=${ulen} and v=${vlen}"
+#
+if ( $do3quadserch == 'y' )then
+  set newmaskb = `echo ${ulen} ${vlen} ${SYN_maskb} | awk '{ if ( $1 / 2 < $3 ) { s = int( $1 / 2 ) } else { if ( $2 / 2 < $3 ) { s = int( $2 / 2 ) } else { s = $3 }}} END { print s }'`
+  set newmaskb = `echo ${newmaskb} | awk '{ if ( $1 < 2 ) { s = 2 } else { s = $1 }} END { print s }'`
+  if ( ${SYN_maskb} != ${newmaskb} ) then
+    ${proc_2dx}/linblock "correcting SYN_maskb from ${SYN_maskb} to ${newmaskb}"
+    set SYN_maskb = ${newmaskb}
+    echo "set SYN_maskb = ${newmaskb}" >> LOGS/${scriptname}.results
+  endif
+  ${proc_2dx}/linblock "Using SYN_maskb=${SYN_maskb} for lattice of length u=${ulen} and v=${vlen}"
+endif
+#
+echo "<<@progress: 5>>"
+#
+#############################################################################
+#############################################################################
+####################### BEGINNING OF THE UNBEND JOB #########################
+#############################################################################
+#############################################################################
+#
+source ${proc_2dx}/2dx_unbendSyn_sub.com
+#
+echo "<<@evaluate>>"
+#
+#############################################################################
+#############################################################################
+########################## END OF THE UNBEND JOB ############################
+#############################################################################
+#############################################################################
+#
+echo "<<@progress: 80>>"
+#
+echo "set UNBENDING_done = y" >> LOGS/${scriptname}.results
+#
+echo ":: Done."
+echo "<<@progress: 100>>"
+#
+##########################################################################
+${proc_2dx}/linblock "${scriptname} - normal end."
+##########################################################################
+#
+exit
+#
+# This is listed here so that it shows up in the GUI of 2dx_image:
+#
+source ${proc_2dx}/2dx_make_SynRef_sub.com
+source ${proc_2dx}/2dx_sym2spcgrp_sub.com
+source ${proc_2dx}/2dx_makedirs
+#
+#
+

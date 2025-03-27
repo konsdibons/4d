@@ -1,0 +1,330 @@
+#!/bin/tcsh -ef
+####
+#
+#############################################################################
+#                                                                           #
+# Title: CTF correction (Part 2)                                            #
+#                                                                           #
+# (C) 2dx.org, GNU Plublic License.                                         #
+#                                                                           #
+# Created..........: 02/20/2006                                             #
+# Last Modification: 03/08/2015                                             #
+# Author...........: 2dx.org                                                #
+#                                                                           #
+#############################################################################
+#
+# SORTORDER: 70
+#
+# MANUAL: This script applies the CTF correction to the evaluated list of Amplitudes and Phases. 
+#
+# MANUAL: It uses 2dx_ctfapplyk.for, which applies CTF correction to the phases, but not the amplitudes. The correction value is added as last column to the output file, where the sign of that value shows if the phases have been inverted. The absolute value of that last column's entry shows the amplitude correction that should be applied to the amplitude - but it has not yet been applied.
+#
+# MANUAL: In order to use the movie-mode unbent APH-files, switch the "Enable movie-mode" option ON!
+#
+# PUBLICATION: 2dx - User-friendly image processing for 2D crystals: <A HREF="http://dx.doi.org/10.1016/j.jsb.2006.07.020">J. Struct. Biol. 157 (2007) 64-72</A>
+# PUBLICATION: Image processing of 2D crystal images: <A HREF="http://link.springer.com/protocol/10.1007%2F978-1-62703-176-9_10">Methods in Molecular Biology (2012)</A>
+#
+# DISPLAY: movie_enable
+# DISPLAY: TLTAXIS
+# DISPLAY: TLTANG 
+# DISPLAY: TLTAXA 
+# DISPLAY: TAXA 
+# DISPLAY: TANGL
+# DISPLAY: defocus
+# DISPLAY: beamtilt
+# DISPLAY: RESMAX
+# DISPLAY: ctfplotresmax
+# DISPLAY: CS
+# DISPLAY: KV
+# DISPLAY: phacon
+# DISPLAY: tempkeep
+# DISPLAY: comment
+# DISPLAY: plotres_rings
+# DISPLAY: realcell
+# DISPLAY: realang
+# DISPLAY: lattice
+# DISPLAY: ctfcor_imode
+#
+#$end_local_vars
+#
+set bin_2dx = ""
+set proc_2dx = ""
+#
+set SYN_Unbending = ""
+set movie_enable = ""
+set movie_stackname = ""
+set imagename = ""
+set nonmaskimagename = ""
+set defocus = ""
+set imagenumber = ""
+set lattice = ""
+set ALAT = ""
+set imagesidelength = ""
+set magnification = ""
+set stepdigitizer = ""
+set tempkeep = ""
+set RESMIN = ""
+set RESMAX = ""
+set TLTAXIS = ""
+set TLTANG = ""
+set TLTAXA = ""
+set TAXA = ""
+set TANGL = ""
+set phacon = ""
+set ctfplotresmax = ""
+set CS = ""
+set KV = ""
+set TLTANG = ""
+set det_tilt = ""
+set tempkeep = ""
+set plotres_rings = ""
+set realcell = ""
+set realang = ""
+set Thread_Number = ""
+set ctfcor_noise = ""
+set ctfcor_imode = ""
+set ctfcor_debug = ""
+set QVAL2 = ""
+set QVALMA = ""
+set QVALMB = ""
+#
+#$end_vars
+#
+set scriptname = 2dx_applyCTF
+\rm -f LOGS/${scriptname}.results
+#
+source ${proc_2dx}/initialize
+#
+echo "<<@evaluate>>"
+#
+set date = `date`
+echo date = ${date}
+#
+if ( x${TLTAXIS} == "x-" || x${TLTAXIS} == "x--" ) then
+  set TLTAXIS = "0.0"
+endif
+if ( x${TLTANG} == "x-" || x${TLTANG} == "x--" ) then
+  set TLTANG = "0.0"
+endif
+if ( x${TLTAXA} == "x-" || x${TLTAXA} == "x--" ) then
+  set TLTAXA = "0.0"
+endif
+if ( x${TAXA} == "x-" || x${TAXA} == "x--" ) then
+  set TAXA = "0.0"
+endif
+if ( x${TANGL} == "x-" || x${TANGL} == "x--" ) then
+  set TANGL = "0.0"
+endif
+#
+if ( ! -e ${movie_stackname}.mrcs ) then
+  set QVALMA = '.'
+  set QVALMB = '.'
+  echo "set QVALMA = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMA_IQ1 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMA_IQ2 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMA_IQ3 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMA_IQ4 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMA_IQ5 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMA_IQ6 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMA_IQ7 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMA_IQ8 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMA_IQ9 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set QVALMB = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMB_IQ1 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMB_IQ2 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMB_IQ3 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMB_IQ4 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMB_IQ5 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMB_IQ6 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMB_IQ7 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMB_IQ8 = ${QVALMA}" >> LOGS/${scriptname}.results
+  echo "set UMB_IQ9 = ${QVALMA}" >> LOGS/${scriptname}.results
+endif
+#
+if ( x${QVALMA}x == 'xx' || x${QVALMA}x == 'x-x' ) then
+  set QVALMA = '.'
+  echo "set QVALMA = ${QVALMA}" >> LOGS/${scriptname}.results
+endif
+#
+if ( x${QVALMB}x == 'xx' || x${QVALMB}x == 'x-x' ) then
+  set QVALMB = '.'
+  echo "set QVALMB = ${QVALMB}" >> LOGS/${scriptname}.results
+endif
+#
+set istilt = `echo $TLTANG | awk '{if ( -15.0 < $1 && $1 < 15.0 ) {s = 0} else {s = 1}} END {print s}'`
+#
+set ctfplotresmax_auto = `echo ${ctfplotresmax} | awk '{ if ( $1 < 0.0001 ) { s = 1 } else { s = 0 } } END { print s }'`
+if ( ${ctfplotresmax_auto} == '1' ) then
+  set ctfplotresmax = `echo ${RESMAX} | awk '{ if ( $1 > 5.0 ) { s = int($1 * 0.90) } else { s = $1 * 0.90 } }  END { print s }'`
+  echo ":Setting max resolution for CTF plot to ${ctfplotresmax}."
+endif
+# set RESPLOTMAX = 0.3
+set RESPLOTMAX = `echo ${ctfplotresmax} | awk '{ if ( $1 > 0.1 ) { s = 1.0 / $1 } else { s = 0.3 } } END { print s }'`
+# 0.3 corresponds to 3.33 Angstroem for the border of the plot (Nyquist).
+#
+echo "<<@progress: 1>>"
+set IS_2DX = yes
+source ${proc_2dx}/2dx_makedirs 
+#
+echo "# IMAGE-IMPORTANT: "FFTIR/${imagename}_fft.mrc "<FFT of Image>" >> LOGS/${scriptname}.results
+echo "# IMAGE-IMPORTANT: "FFTIR/${imagename}_red_fft.mrc "<FFT of Downsampled Image>" >> LOGS/${scriptname}.results
+#
+
+  #
+  #############################################################################
+  ${proc_2dx}/linblock "CTFAPPLY - to correct the microscope's CTF"
+  #############################################################################
+  #
+  #
+  #
+  if ( ! -e APH/image_ctfcor_fou_unbent.aph ) then
+    if ( -e APH/${imagename}.fou.nolimit.aph ) then
+      \mv -f APH/${imagename}.fou.nolimit.aph APH/image_ctfcor_fou_unbent.aph
+    endif
+    if ( -e APH/${imagename}_fou_nolimit.aph ) then
+      \mv -f APH/${imagename}_fou_nolimit.aph APH/image_ctfcor_fou_unbent.aph
+    endif
+    if ( -e APH/${imagename}_fou.aph ) then
+      \mv -f APH/${imagename}_fou.aph APH/image_ctfcor_fou_unbent.aph
+    endif
+    if ( ! -e APH/image_ctfcor_fou_unbent.aph ) then
+      ${proc_2dx}/protest "ERROR: Neither APH/image_ctfcor_fou_unbent.aph, nor APH/${imagename}.fou.nolimit.aph, nor APH/${imagename}_fou_nolimit.aph exist."
+    endif
+  endif
+
+  echo "<<@progress: 20>>"
+
+  set CTF_infile = APH/image_ctfcor_fou_unbent.aph
+  if ( -e ${CTF_infile} ) then
+    set CTF_outfile = APH/image_ctfcor_fou_unbent_ctf.aph
+    set unbent_image = unbent
+    set unbent_FFT = FFTIR/image_ctfcor_fou_unbent_fft.mrc
+    set algo = U2
+    set nametag = "Unb.II"
+    #######################################
+    # UnbendII
+    source ${proc_2dx}/2dx_applyCTF_sub.com
+    #######################################
+  else
+    ${proc_2dx}/protest "ERROR: ${CTF_infile} not found. First run unbending scripts."
+  endif
+
+  echo "<<@progress: 30>>"
+
+  # set CTF_infile = APH/image_ctfcor_syn_unbend.aph
+  # set CTF_outfile = APH/image_ctfcor_U2-Syn_ctf.aph
+  # set unbent_image = SCRATCH/image_ctfcor_syn_unbent_taper
+  # set unbent_FFT = SCRATCH/image_ctfcor_syn_unbent_taper_fft.mrc
+  # set algo = US
+  # set nametag = "U2-Syn"
+  #######################################
+  # Synthetic Reference Unbend
+  # source ${proc_2dx}/2dx_applyCTF_sub.com
+  #######################################
+
+  echo "<<@progress: 40>>"
+
+  if ( ${movie_enable} == "y" ) then
+    set CTF_infile = APH/image_ctfcor_movie_fou.aph
+    set CTF_outfile = APH/image_ctfcor_movie_fou_ctf.aph
+    set unbent_image = MA/direct_sum_filt_upscale
+    set unbent_FFT = MA/direct_sum_fft.mrc
+    set algo = UMA
+    set nametag = "MA"
+    #######################################
+    # MA
+    source ${proc_2dx}/2dx_applyCTF_sub.com
+    #######################################
+
+    echo "<<@progress: 50>>"
+
+    # set CTF_infile = APH/image_ctfcor_movie_syn.aph
+    # set CTF_outfile = APH/image_ctfcor_movie_syn_ctf.aph
+    # set unbent_image = MA/direct_sum_syn_filt_upscale
+    # set unbent_FFT = MA/direct_sum_syn_fft.mrc
+    # set algo = UMAS
+    # set nametag = "MA_Syn"
+    #######################################
+    # MAS
+    # source ${proc_2dx}/2dx_applyCTF_sub.com
+    #######################################
+
+    echo "<<@progress: 60>>"
+
+    set CTF_infile = APH/image_ctfcor_movieB_fou.aph
+    set CTF_outfile = APH/image_ctfcor_movieB_fou_ctf.aph
+    set unbent_image = MB/direct_sum_filt_upscale
+    set unbent_FFT = MB/direct_sum_fft.mrc
+    set algo = UMB
+    set nametag = "MB"
+    #######################################
+    # MB
+    source ${proc_2dx}/2dx_applyCTF_sub.com
+    #######################################
+
+    echo "<<@progress: 70>>"
+
+    # set CTF_infile = APH/image_ctfcor_movieB_syn.aph
+    # set CTF_outfile = APH/image_ctfcor_movieB_syn_ctf.aph
+    # set unbent_image = MB/direct_sum_syn_filt_upscale
+    # set unbent_FFT = MB/direct_sum_syn_fft.mrc
+    # set algo = UMBS
+    # set nametag = "MB_Syn"
+    #######################################
+    # MBS
+    # source ${proc_2dx}/2dx_applyCTF_sub.com
+    #######################################
+  endif
+  
+  echo "<<@progress: 80>>"
+
+  echo ":: QVAL2, QVALMA, QVALMB = "${QVAL2},${QVALMA},${QVALMB}
+
+  if ( ${movie_enable} == "y" ) then
+    set movie_better = `echo ${QVALMA} ${QVAL2} | awk '{ if ( $1 > $2 ) { s = 1 } else { s = 0 } } END { print s }'`
+    if ( ${movie_better} == "1" ) then
+      set movie_better = `echo ${QVALMA} ${QVALMB} | awk '{ if ( $1 > $2 ) { s = 1 } else { s = 0 } } END { print s }'`
+      if ( ${movie_better} == "1" ) then
+        ${proc_2dx}/linblock "Using MA unbent data, since these have the higher QVAL"
+        set final_outfile = image_ctfcor_movie_fou_ctf.aph
+      else
+        ${proc_2dx}/linblock "Using MB unbent data, since these have the higher QVAL"
+        set final_outfile = image_ctfcor_movieB_fou_ctf.aph
+      endif
+    else
+      set movie_better = `echo ${QVALMB} ${QVAL2} | awk '{ if ( $1 > $2 ) { s = 1 } else { s = 0 } } END { print s }'`
+      if ( ${movie_better} == "1" ) then
+        ${proc_2dx}/linblock "Using MB unbent data, since these have the higher QVAL"
+        set final_outfile = image_ctfcor_movieB_fou_ctf.aph
+      else
+        ${proc_2dx}/linblock "Using Unbend2 (not Movie) unbent data, since these have the higher QVAL"
+        set final_outfile = image_ctfcor_fou_unbent_ctf.aph
+      endif
+    endif
+  else
+    ${proc_2dx}/linblock "Using Unbend2 unbent data"
+    set final_outfile = image_ctfcor_fou_unbent_ctf.aph
+  endif
+
+  cd APH
+  \rm -f image_ctfcor_ctf.aph
+  \ln -s ${final_outfile} image_ctfcor_ctf.aph
+  cd ..
+  echo "# IMAGE-IMPORTANT: APH/image_ctfcor_ctf.aph <Link to best APH File [H,K,A,P(CTF Phase flipped),IQ,Back,CTF]>" >> LOGS/${scriptname}.results
+  #
+#
+#
+echo "set CTF_done = y" >> LOGS/${scriptname}.results
+#
+echo ":: Done."
+echo "<<@progress: 100>>"
+#
+##########################################################################
+${proc_2dx}/linblock "${scriptname} - normal end."
+##########################################################################
+#
+exit
+#
+#
+#
+
