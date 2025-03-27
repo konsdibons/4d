@@ -61,3 +61,63 @@ Once everything is set up, CMAKE will automatically find the required paths and 
 4d is compiled in two stages. First we check the presence of all required dependencies and in the second stage we compile the entire source tree.
 
 Upon building, 4d creates a directory “build”, in which the configuration and built files are placed. If compilation fails due to missing or wrong dependencies, and you add those dependencies later, then don't forget to remove the “build” directory before trying agaom to “./build_all”. Otherwise, the old configuration files in the “build” directory will still be present and steer the compilation into the wrong direction.
+
+## Setting up external software tools
+
+4d supports a lot of image processing tasks in cryo-EM. To carry out many of these tasks, we depend on the great free software developed by the community. Some of these are essential for the functioning of Focus and others are optional. The required packages also depend on the technique you use for reconstruction. Here we list all the packages categorised as required and optional.
+
+### Essential
+
+The softwares in this category are compulsory and MUST be installed independent of anything.
+
+### (t)CSH
+
+CSH is a Unix shell and a scripting language widely used in the electron microscopy field for historical reasons. One would not be able to run anything from 4d without CSH. 4d requires its successor, TCSH, which is better and safer. In modern Linux distributions, csh is just a symbolic link to tcsh. Please make sure this is the case in your system. If not please install tcsh >6.0 and make sure that csh links to it.
+
+### gawk
+
+gawk is a more powerful version of the command-line utility awk. Install gawk on OSX with “brew install gawk”. On Linux, try “sudo apt-get install gawk”.
+
+### Python and PILLOW
+
+Many utilities and specific-purpose tools used by 4d are written in the Python scripting language (version 2.7.x). We recommend using a scientific Python installation like Anaconda or Canopy. You can also use the EMAN2.2 Python environment based on Anaconda (see below).
+
+You also need **pip** and the module **pil** (or pillow).
+
+On OSX, try
+
+> xcode-select --install
+> brew install python2.7
+> pip3 install pillow
+
+or alternatively:
+> pip install pillow
+
+On Linux, try:
+> apt-get install python2.7 (or yum install python2.7)
+> apt-get install python3
+> pip3 install pillow
+> pip3 install matplotlib
+and make sure in the Preferences panel of 4d, that 4d is using this python2.7 binary, which may reside in /usr/local/bin/python2.7
+
+Or to install those in python2.7:
+
+> /usr/bin/python -mpip install -U pillow
+> /usr/bin/python -mpip install -U matplotlib
+
+### NumExpr
+For accelerating some heavy calculations in Python scripts, 4d uses the NumExpr evaluator. You can install numexpr in your Python environment with the following pip command:
+> pip install numexpr
+
+### Software for drift correction
+Drift correction can be done using MotionCor2. In case you require to do the drift correction using one of these software, please install the required software using the links below:
+> MotionCor2: http://msg.ucsf.edu/em/software/motioncor2.html
+> MotionCor3: https://github.com/czimaginginstitute/MotionCor3
+> Unblur: http://grigoriefflab.janelia.org/unblur
+> Zorro: https://github.com/LBEM-CH/zorro
+
+### CTF determination software
+In all projects, CTF can be determined for each frame using CTFFIND4 or for the averaged frame using gCTF. These softwares need to be installed separately from the links below, if you wish to use them.
+> CTFFIND4: http://grigoriefflab.janelia.org/ctffind4
+> GCTF: http://www.mrc-lmb.cam.ac.uk/kzhang/Gctf
+
