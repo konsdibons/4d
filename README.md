@@ -32,7 +32,9 @@ On OSX, you might have to do
 This program requires fftw version 3.0.0 or later. The package is called libfftw3-dev on Ubuntu, but on Fedora you have to install fftw-devel and fftw-libs. You can install this famous library via the package manager or directly from http://www.fftw.org. In such a case use the following commands to compile FFTW:
 
 > ./configure --enable-shared --enable-threads;
+
 > make;
+
 > sudo make install;
 
 ### Qt5
@@ -76,7 +78,9 @@ CSH is a Unix shell and a scripting language widely used in the electron microsc
 
 ### gawk
 
-gawk is a more powerful version of the command-line utility awk. Install gawk on OSX with “brew install gawk”. On Linux, try “sudo apt-get install gawk”.
+gawk is a more powerful version of the command-line utility awk. 
+- Install gawk on OSX with "brew install gawk". 
+- On Linux, try “sudo apt-get install gawk”.
 
 ### Python and PILLOW
 
@@ -87,7 +91,9 @@ You also need **pip** and the module **pil** (or pillow).
 On OSX, try
 
 > xcode-select --install
+
 > brew install python2.7
+
 > pip3 install pillow
 
 or alternatively:
@@ -95,14 +101,19 @@ or alternatively:
 
 On Linux, try:
 > apt-get install python2.7 (or yum install python2.7)
+
 > apt-get install python3
+
 > pip3 install pillow
+
 > pip3 install matplotlib
+
 and make sure in the Preferences panel of 4d, that 4d is using this python2.7 binary, which may reside in /usr/local/bin/python2.7
 
 Or to install those in python2.7:
 
 > /usr/bin/python -mpip install -U pillow
+
 > /usr/bin/python -mpip install -U matplotlib
 
 ### NumExpr
@@ -112,12 +123,16 @@ For accelerating some heavy calculations in Python scripts, 4d uses the NumExpr 
 ### Software for drift correction
 Drift correction can be done using MotionCor2. In case you require to do the drift correction using one of these software, please install the required software using the links below:
 > MotionCor2: http://msg.ucsf.edu/em/software/motioncor2.html
+
 > MotionCor3: https://github.com/czimaginginstitute/MotionCor3
+
 > Unblur: http://grigoriefflab.janelia.org/unblur
+
 > Zorro: https://github.com/LBEM-CH/zorro
 
 ### CTF determination software
 In all projects, CTF can be determined for each frame using CTFFIND4 or for the averaged frame using gCTF. These softwares need to be installed separately from the links below, if you wish to use them.
 > CTFFIND4: http://grigoriefflab.janelia.org/ctffind4
+
 > GCTF: http://www.mrc-lmb.cam.ac.uk/kzhang/Gctf
 
