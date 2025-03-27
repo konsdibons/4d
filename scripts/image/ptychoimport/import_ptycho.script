@@ -121,8 +121,6 @@ source ${proc_2dx}/initialize
 #
 source ${proc_2dx}/2dx_makedirs
 #
-source ${proc_2dx}/2dx_makedirs
-#
 set import_produce_gainref2D = "y"
 set import_produce_gainref2Dfft = "y"
 #
@@ -190,13 +188,6 @@ if ( ${import_rawstack_type} == 4 ) then
   echo "# IMAGE: ${raw_gaincorrectedstack}.h5 <Original h5 file (stack)>" >> LOGS/${scriptname}.results
   echo "# IMAGE: ${vacuum_probe} <Vacuum Probe (npy)>" >> LOGS/${scriptname}.results
   echo "# IMAGE: ${vacuum_probe_original} <Vacuum Probe Original (npy)>" >> LOGS/${scriptname}.results
-  #exit
-  #
-  #
-  #
-  #
-  #
-  #
   #
   exit 
 endif

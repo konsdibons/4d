@@ -633,7 +633,6 @@ void AutoImportWindow::analyzeImport(bool force) {
                 locBaseName.prepend("/");
                 locBaseName.prepend(QFileInfo(baseName).path());
             }
-            qDebug()<<"Here4: locBaseName= "<<locBaseName;
             toBeImported_.insert(imageNumber, QStringList() << locBaseName);
             
             //Search string for avg File
@@ -891,6 +890,8 @@ void AutoImportWindow::importImage() {
     // qDebug();
     
     QString locScript;
+    QString locFile1;
+    QString locFile2;
 
     QString number;
     number = toBeImported_.keys().first();
@@ -1264,9 +1265,12 @@ void AutoImportWindow::importImage() {
                     conf->set("raw_gaincorrectedstack", "raw_gaincorrectedstack", false);
                     conf->set("raw_gaincorrectedstack_original", files[1], false);
                     conf->set("import_original_time", QString::number(QFileInfo(files[1]).created().toMSecsSinceEpoch()), false);
-                    locScript = "cp -f " + files[1] + " " + workingDir.canonicalPath() + "/" + "raw_gaincorrectedstack" + '.' + QFileInfo(files[1]).suffix();
+                    locFile1 = files[1];
+                    locFile2 = workingDir.canonicalPath() + "/" + "raw_gaincorrectedstack" + '.' + QFileInfo(files[1]).suffix();
+                    locFile2 = locFile2;
+                    locScript = "cp -f " + locFile1 + " " + locFile2;
                     scriptsToBeExecuted_.append(locScript);
-		    qDebug()<<"Adding script: "<<locScript;
+                    qDebug()<<"Adding script: "<<locScript;
                     if(deleteCheck->isChecked()) scriptsToBeExecuted_.append("rm -f " + files[1]);
                 }
                 hasImage = true;

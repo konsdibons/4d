@@ -82,10 +82,6 @@ if ( ! -w SCRATCH ) then
   \rm -rf SCRATCH
 endif
 #
-if ( ! -w FFTIR ) then
-  \rm -rf FFTIR
-endif
-#
 if ( ! -w FASTDISK ) then
   \rm -rf FASTDISK
 endif
@@ -147,28 +143,12 @@ else
   endif
 endif
 #
-if ( $?IS_2DX != 0 ) then
-  if ( ! -d FFTIR ) then
-    \mkdir FFTIR
-  endif
-  if ( ! -d APH ) then
-    \mkdir APH
-  endif
-  if ( ! -d PRJ ) then
-    \mkdir PRJ
-  endif
-endif
-#
 if ( ! -d proc ) then
   \mkdir proc
 endif
 #
 if ( ! -d LOGS ) then
   \mkdir LOGS
-endif
-#
-if ( ! -d PS ) then
-  \mkdir PS
 endif
 #
 if ( ! -d STATUS ) then
