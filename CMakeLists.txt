@@ -2,7 +2,8 @@
 # @file CMakeLists.txt
 # @author Nikhil Biyani
 # @author Marcel Arheit
-# @location focus
+# @author Henning Stahlberg
+# @location 4d
 #------------------------------------------------------------------------------
 
 #-- CMAKE Configurations ------------------------------------------------------
@@ -26,10 +27,10 @@ include(SetPropagateDeps)
 
 #-- PROJECT Configurations ----------------------------------------------------
 # 
-PROJECT(Focus)
-set (FOCUS_VERSION_MAJOR 1)
-set (FOCUS_VERSION_MINOR 1)
-set (FOCUS_VERSION_PATCH 0)
+PROJECT(4D)
+set (4D_VERSION_MAJOR 1)
+set (4D_VERSION_MINOR 1)
+set (4D_VERSION_PATCH 0)
 #
 # Get the current working branch
 execute_process(
@@ -78,28 +79,28 @@ else()
 endif()
 
 if(CUDA_FOUND)
-	OPTION(ENABLE_CUDA "enable Focus CUDA usage" ON)
+	OPTION(ENABLE_CUDA "enable 4d CUDA usage" ON)
 	message("USING CUDA")
 	add_definitions( -DUSE_CUDA )
 	include_directories(/usr/local/cuda-5.5/include)
 else()
 	message("NOT USING CUDA")
-	OPTION(ENABLE_CUDA "enable Focus CUDA usage" OFF)
+	OPTION(ENABLE_CUDA "enable 4d CUDA usage" OFF)
 endif()
 #------------------------------------------------------------------------------
 
 #-- BASE DIRECTORIES ----------------------------------------------------------
 #
 # Source directory
-set(FOCUS_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "The path of the FOCUS root source directory.")
-message(STATUS "The variable FOCUS_ROOT_DIR is set to: ${FOCUS_ROOT_DIR}")
+set(4D_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "The path of the 4d root source directory.")
+message(STATUS "The variable 4D_ROOT_DIR is set to: ${4D_ROOT_DIR}")
 
 # Include directory
-set(FOCUS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE PATH "The path of the FOCUS include directory.")
-message(STATUS "The variable FOCUS_INCLUDE_DIR is set to: ${FOCUS_INCLUDE_DIR}")
+set(4D_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE PATH "The path of the 4d include directory.")
+message(STATUS "The variable 4D_INCLUDE_DIR is set to: ${4D_INCLUDE_DIR}")
 
 # Binary Directory
-set(FOCUS_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "The path of the FOCUS binary directory.")
+set(4D_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "The path of the 4d binary directory.")
 
 #add_subdirectory(include)
 #-------------------------------------------------------------------------------
@@ -124,7 +125,6 @@ install(FILES ${DAT} DESTINATION .)
 add_subdirectory(external)
 add_subdirectory(kernel)
 add_subdirectory(apps)
-add_subdirectory(packaging)
 #------------------------------------------------------------------------------
 
 #-- COPY SCRIPTS AND WEB FOLDER AS THEY ARE -----------------------------------

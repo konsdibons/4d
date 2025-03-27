@@ -61,7 +61,7 @@ QStringList Translator::getEnvironment() {
     QStringList env = QProcess::systemEnvironment();
 
     foreach(ParameterElementData *e, userPreferenceData.data()->getLookupTable()) {
-        env << e->name() + "_focus_app=" + e->value().toString();
+        env << e->name() + "_4d_app=" + e->value().toString();
     }
 
     

@@ -108,7 +108,7 @@ void ImageNavigator::initialize() {
 
 void ImageNavigator::initializeActions() {
     setAttribute(Qt::WA_DeleteOnClose);
-    menu = mainMenuBar->addMenu("Focus Viewer");
+    menu = mainMenuBar->addMenu("4d Viewer");
     QSignalMapper *signalMap = new QSignalMapper(this);
 
     QAction *showFullScreenAction = new QAction(tr("Show Full Screen"), this);

@@ -21,7 +21,7 @@ ELSE()
     MESSAGE(STATUS "@LIBTITLE@: QT5 not Found!")
 ENDIF()
 
-SET(FOCUS_LOG_LIBRARIES   Qt5::Widgets) 
+SET(4D_LOG_LIBRARIES   Qt5::Widgets) 
 
 
 # Header files -----------------------------------------------------------------
@@ -58,10 +58,10 @@ if(APPLE)
   # Define some settings for the Bundle
   set(MACOSX_BUNDLE_INFO_STRING "www.focus-em.org")
   set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.cina.focus.${EXETITLE}")
-  set(MACOSX_BUNDLE_LONG_VERSION_STRING "${EXETITLE} Version ${FOCUS_VERSION_MAJOR}.${FOCUS_VERSION_MINOR}.${FOCUS_VERSION_PATCH}")
+  set(MACOSX_BUNDLE_LONG_VERSION_STRING "${EXETITLE} Version ${4D_VERSION_MAJOR}.${4D_VERSION_MINOR}.${4D_VERSION_PATCH}")
   set(MACOSX_BUNDLE_BUNDLE_NAME "${EXETITLE}")
-  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${FOCUS_VERSION_MAJOR}.${FOCUS_VERSION_MINOR}.${FOCUS_VERSION_PATCH}")
-  set(MACOSX_BUNDLE_BUNDLE_VERSION "${FOCUS_VERSION_MAJOR}.${FOCUS_VERSION_MINOR}.${FOCUS_VERSION_PATCH}")
+  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "${4D_VERSION_MAJOR}.${4D_VERSION_MINOR}.${4D_VERSION_PATCH}")
+  set(MACOSX_BUNDLE_BUNDLE_VERSION "${4D_VERSION_MAJOR}.${4D_VERSION_MINOR}.${4D_VERSION_PATCH}")
   set(MACOSX_BUNDLE_COPYRIGHT "Copyright C-CINA, 2015. All Rights Reserved.")
   set( MACOSX_BUNDLE_ICON_FILE  icon.icns)
   
@@ -82,7 +82,7 @@ endif(APPLE)
 qt5_use_modules(${EXETITLE} Widgets)
 
 # Linking
-target_link_libraries(${EXETITLE} ${FOCUS_LOG_LIBRARIES}) 
+target_link_libraries(${EXETITLE} ${4D_LOG_LIBRARIES}) 
 
 #--------------------------------------------------------------------------------
 # Now the installation stuff below
@@ -136,7 +136,7 @@ if(APPLE_BUNDLE)
             set(BU_CHMOD_BUNDLE_ITEMS ON)
 	    include(InstallRequiredSystemLibraries)    
 	    include(BundleUtilities)
-	      fixup_bundle(\"${APPS}\" \"\${FOCUS_LIBRARIES}\" \"\")
+	      fixup_bundle(\"${APPS}\" \"\${4D_LIBRARIES}\" \"\")
 	    verify_app(\"${APPS}\")
 	    " COMPONENT Runtime)
 endif(APPLE_BUNDLE)

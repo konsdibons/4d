@@ -31,13 +31,13 @@ AboutWindow::AboutWindow(QWidget *parent)
     addAction(hideWindow);
     connect(hideWindow, SIGNAL(triggered()), this, SLOT(hide()));
 
-    setWindowTitle("About Focus");
+    setWindowTitle("About 4d");
 
     setFixedSize(QSize(568, 410));
 
     QVBoxLayout *layout = new QVBoxLayout(this);
     
-    QLabel* title = new QLabel("Focus");
+    QLabel* title = new QLabel("4d");
     QFont font = title->font();
     font.setBold(true);
     font.setPointSize(18);

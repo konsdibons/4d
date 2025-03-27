@@ -2,7 +2,7 @@
 # @file CMakeLists.txt
 # @author Nikhil Biyani
 # @author Marcel Arheit
-# @location focus/apps
+# @location 4d/apps
 #------------------------------------------------------------------------------
 
 #-- CMAKE Configurations ------------------------------------------------------
@@ -37,11 +37,11 @@ set(USE_FFTWF TRUE)
 find_package(FFTW)
 if(FFTWF_FOUND)
 	message(STATUS "@EXETITLE@: Found FFTW at ${FFTWF_LIB}")
-	SET(FOCUS_LIBRARIES ${FOCUS_LIBRARIES} ${FFTWF_LIB})
+	SET(4D_LIBRARIES ${4D_LIBRARIES} ${FFTWF_LIB})
 elseif(FFTWF_FOUND)
 	message(FATAL_ERROR "FFTW not found!")
 endif(FFTWF_FOUND)
-SET(FOCUS_LIBRARIES ${FOCUS_LIBRARIES} ${FFTW_LIB})
+SET(4D_LIBRARIES ${4D_LIBRARIES} ${FFTW_LIB})
 
 # QT5 ---------------------------------
 FIND_PACKAGE(Qt5 COMPONENTS Widgets Network Script OpenGL Concurrent REQUIRED)
@@ -74,9 +74,9 @@ ELSE()
     MESSAGE(STATUS "@EXETITLE@: QT5 not Found!")
 ENDIF()
 
-SET(FOCUS_LIBRARIES ${FOCUS_LIBRARIES} Qt5::Widgets Qt5::Network Qt5::Script Qt5::OpenGL Qt5::Concurrent)
+SET(4D_LIBRARIES ${4D_LIBRARIES} Qt5::Widgets Qt5::Network Qt5::Script Qt5::OpenGL Qt5::Concurrent)
 IF(APPLE)
-    SET(FOCUS_LIBRARIES ${FOCUS_LIBRARIES} Qt5::MacExtras)
+    SET(4D_LIBRARIES ${4D_LIBRARIES} Qt5::MacExtras)
 ENDIF()
 
 # OPENGL ---------------------------------
@@ -84,14 +84,14 @@ find_package(OpenGL)
 if(OPENGL_FOUND)
         message(STATUS "Found OpenGL at ${OPENGL_LIBRARIES}")
         INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIR})
-        SET(FOCUS_LIBRARIES ${FOCUS_LIBRARIES} ${OPENGL_LIBRARIES})
+        SET(4D_LIBRARIES ${4D_LIBRARIES} ${OPENGL_LIBRARIES})
 endif(OPENGL_FOUND)
 #-------------------------------------------------------------------------------
 
 #-- ADD SUBDIRECTORIES --------------------------------------------------------
 add_subdirectory(src)
 add_subdirectory(fLogBrowser)
-add_subdirectory(focus)
+add_subdirectory(4d)
 add_subdirectory(fMrcConverter)
 add_subdirectory(fViewer)
 add_subdirectory(resources)

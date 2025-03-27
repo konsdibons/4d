@@ -2,7 +2,8 @@
 # @file CMakeLists.txt
 # @author Nikhil Biyani
 # @author Marcel Arheit
-# @location focus/apps/src/fMrcConverter/
+# @author Henning Stahlberg
+# @location 4d/apps/src/fMrcConverter/
 #------------------------------------------------------------------------------
 
 #--- CMAKE Configurations ------------------------------------------------------
@@ -15,8 +16,8 @@ set(EXETITLE fMrcConverter)           # Application name
 
 #--- BASE DIRECTORIES ----------------------------------------------------------
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}) # Header Files
-get_propagate_deps(focus_app) # Get the header files from the lib
-SET(FOCUS_SRC main.cpp) # Source Files
+get_propagate_deps(4d_app) # Get the header files from the lib
+SET(4D_SRC main.cpp) # Source Files
 #-------------------------------------------------------------------------------
 
 #--- Create Executable ---------------------------------------------------------
@@ -26,15 +27,15 @@ IF( APPLE )
     # Define some settings for the Bundle
     SET(MACOSX_BUNDLE_INFO_STRING "www.focus-em.org")
     SET(MACOSX_BUNDLE_GUI_IDENTIFIER "org.cina.focus.${EXETITLE}")
-    SET(MACOSX_BUNDLE_LONG_VERSION_STRING "${EXETITLE} Version ${FOCUS_VERSION_MAJOR}.${FOCUS_VERSION_MINOR}.${FOCUS_VERSION_PATCH}")
+    SET(MACOSX_BUNDLE_LONG_VERSION_STRING "${EXETITLE} Version ${4D_VERSION_MAJOR}.${4D_VERSION_MINOR}.${4D_VERSION_PATCH}")
     SET(MACOSX_BUNDLE_BUNDLE_NAME "${EXETITLE}")
-    SET(MACOSX_BUNDLE_SHORT_VERSION_STRING "${FOCUS_VERSION_MAJOR}.${FOCUS_VERSION_MINOR}.${FOCUS_VERSION_PATCH}")
-    SET(MACOSX_BUNDLE_BUNDLE_VERSION "${FOCUS_VERSION_MAJOR}.${FOCUS_VERSION_MINOR}.${FOCUS_VERSION_PATCH}")
+    SET(MACOSX_BUNDLE_SHORT_VERSION_STRING "${4D_VERSION_MAJOR}.${4D_VERSION_MINOR}.${4D_VERSION_PATCH}")
+    SET(MACOSX_BUNDLE_BUNDLE_VERSION "${4D_VERSION_MAJOR}.${4D_VERSION_MINOR}.${4D_VERSION_PATCH}")
     SET(MACOSX_BUNDLE_COPYRIGHT "Copyright C-CINA, 2016. All Rights Reserved.")
     SET(MACOSX_BUNDLE_ICON_FILE  icon.icns )
 
     # create a bundle with an icon too!
-    ADD_EXECUTABLE( ${EXETITLE} MACOSX_BUNDLE ${FOCUS_SRC} )
+    ADD_EXECUTABLE( ${EXETITLE} MACOSX_BUNDLE ${4D_SRC} )
     
     # Allows for bundle re-creation just by running "make". Also installs bundle icon
     ADD_CUSTOM_COMMAND(TARGET ${EXETITLE} POST_BUILD
@@ -43,10 +44,10 @@ IF( APPLE )
             COMMAND cp ARGS ${CMAKE_CURRENT_SOURCE_DIR}/icons/${MACOSX_BUNDLE_ICON_FILE}
             ${CMAKE_CURRENT_BINARY_DIR}/${EXETITLE}.app/Contents/Resources/${MACOSX_BUNDLE_ICON_FILE})
 ELSE( APPLE )
-    ADD_EXECUTABLE( ${EXETITLE} ${FOCUS_SRC} )
+    ADD_EXECUTABLE( ${EXETITLE} ${4D_SRC} )
 ENDIF( APPLE )
 
-TARGET_LINK_LIBRARIES(${EXETITLE} ${FFTWF_LIB} ${FOCUS_LIBRARIES} focus_app)
+TARGET_LINK_LIBRARIES(${EXETITLE} ${FFTWF_LIB} ${4D_LIBRARIES} 4d_app)
 #-------------------------------------------------------------------------------
  
 #--- INSTALL -------------------------------------------------------------------

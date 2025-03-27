@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     parser.setApplicationDescription("Focus Software Suite: Main Graphical User Interface & Project Manager");
     parser.addHelpOption();
     parser.addVersionOption();
-    parser.addPositionalArgument("project_dir", "Path of the focus Project to be opened.");
+    parser.addPositionalArgument("project_dir", "Path of the 4d Project to be opened.");
     parser.process(app);
     
     UserPreferences().loadAllFontSettings();

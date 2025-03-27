@@ -174,7 +174,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=Focus
+CMAKE_PROJECT_NAME:STATIC=4d
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
@@ -250,7 +250,7 @@ CMakeTools_IS_TOP_LEVEL:STATIC=OFF
 //Value Computed by CMake
 CMakeTools_SOURCE_DIR:STATIC=/Users/stahlber/P/cmake
 
-//enable Focus CUDA usage
+//enable 4d CUDA usage
 ENABLE_CUDA:BOOL=OFF
 
 //Path to a file.
@@ -281,13 +281,13 @@ FOCUS_INCLUDE_DIR:PATH=/Users/stahlber/P/include
 FOCUS_ROOT_DIR:PATH=/Users/stahlber/P
 
 //Value Computed by CMake
-Focus_BINARY_DIR:STATIC=/Users/stahlber/P/clean
+4d_BINARY_DIR:STATIC=/Users/stahlber/P/clean
 
 //Value Computed by CMake
-Focus_IS_TOP_LEVEL:STATIC=ON
+4d_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
-Focus_SOURCE_DIR:STATIC=/Users/stahlber/P
+4d_SOURCE_DIR:STATIC=/Users/stahlber/P
 
 //Path to a program.
 HOSTNAME_CMD:FILEPATH=/bin/hostname

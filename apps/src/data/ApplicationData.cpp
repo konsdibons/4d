@@ -20,7 +20,7 @@ QDir ApplicationData::binDir() {
 }
 
 QUrl ApplicationData::bugReportUrl() {
-    return QUrl("https://github.com/C-CINA/focus/issues");
+    return QUrl("https://github.com/C-CINA/4d/issues");
 }
 
 QDir ApplicationData::configDir() {
@@ -28,7 +28,7 @@ QDir ApplicationData::configDir() {
 }
 
 QString ApplicationData::mainApp() {
-    return binDir().absoluteFilePath("focus");
+    return binDir().absoluteFilePath("4d");
 }
 
 QString ApplicationData::mrcConverterApp() {

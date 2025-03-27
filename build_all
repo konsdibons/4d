@@ -98,10 +98,10 @@ echo ''
 
 
 #################################################################################
-# Focus 
+# 4d
 ################################################################################
 
-APP=Focus
+APP=4d
 echo '*============================================================================*'
 echo '| ' ${APP}
 echo '+----------------------------------------------------------------------------+'
@@ -228,69 +228,88 @@ echo "Checking environment files..."
 if [ -e ~/.bashrc ];
   then
     envfile=~/.bashrc
-    if ! grep "# Added by FOCUS on" ${envfile} >& /dev/null ;
+    if ! grep "# Added by 4d on" ${envfile} >& /dev/null ;
       then
         echo "Adding environment variables to ${envfile}"
         echo -e "\n">> ${envfile}
-        echo "# Added by FOCUS on `date`:" >> ${envfile}
+        echo "# Added by 4d on `date`:" >> ${envfile}
         echo "# (makes standalone programs and Python modules available)" >> ${envfile}
-        echo "export FOCUS_ROOT=${PREFIX}" >> ${envfile}
-        echo "export PATH=\${FOCUS_ROOT}/bin:\${PATH}" >> ${envfile}
-        echo "export PATH=\${FOCUS_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
-        echo "export PATH=\${FOCUS_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
-        echo "export PYTHONPATH=\${FOCUS_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
-    fi  
+        echo "export A4D_ROOT=${PREFIX}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
+        echo "export PYTHONPATH=\${A4D_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
+    fi
 fi
 
 if [ -e ~/.bash_profile ];
   then
     envfile=~/.bash_profile
-    if ! grep "# Added by FOCUS on" ${envfile} >& /dev/null ;
+    if ! grep "# Added by 4d on" ${envfile} >& /dev/null ;
       then
         echo "Adding environment variables to ${envfile}"
         echo -e "\n">> ${envfile}
-        echo "# Added by FOCUS on `date`:" >> ${envfile}
+        echo "# Added by 4d on `date`:" >> ${envfile}
         echo "# (makes standalone programs and Python modules available)" >> ${envfile}
-        echo "export FOCUS_ROOT=${PREFIX}" >> ${envfile}
-        echo "export PATH=\${FOCUS_ROOT}/bin:\${PATH}" >> ${envfile}
-        echo "export PATH=\${FOCUS_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
-        echo "export PATH=\${FOCUS_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
-        echo "export PYTHONPATH=\${FOCUS_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
-    fi  
+        echo "export A4D_ROOT=${PREFIX}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
+        echo "export PYTHONPATH=\${A4D_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
+    fi
 fi
 
 if [ -e ~/.profile ];
   then
     envfile=~/.profile
-    if ! grep "# Added by FOCUS on" ${envfile} >& /dev/null ;
+    if ! grep "# Added by 4d on" ${envfile} >& /dev/null ;
       then
         echo "Adding environment variables to ${envfile}"
         echo -e "\n">> ${envfile}
-        echo "# Added by FOCUS on `date`:" >> ${envfile}
+        echo "# Added by 4d on `date`:" >> ${envfile}
         echo "# (makes standalone programs and Python modules available)" >> ${envfile}
-        echo "export FOCUS_ROOT=${PREFIX}" >> ${envfile}
-        echo "export PATH=\${FOCUS_ROOT}/bin:\${PATH}" >> ${envfile}
-        echo "export PATH=\${FOCUS_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
-        echo "export PATH=\${FOCUS_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
-        echo "export PYTHONPATH=\${FOCUS_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
-    fi  
+        echo "export A4D_ROOT=${PREFIX}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
+        echo "export PYTHONPATH=\${A4D_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
+    fi
 fi
 
 if [ -e ~/.cshrc ];
   then
     envfile=~/.cshrc
-    if ! grep "# Added by FOCUS on" ${envfile} >& /dev/null ;
+    if ! grep "# Added by 4d on" ${envfile} >& /dev/null ;
       then
         echo "Adding environment variables to ${envfile}"
         echo -e "\n">> ${envfile}
-        echo "# Added by FOCUS on `date`:" >> ${envfile}
+        echo "# Added by 4d on `date`:" >> ${envfile}
         echo "# (makes standalone programs and Python modules available)" >> ${envfile}
-        echo "setenv FOCUS_ROOT ${PREFIX}" >> ${envfile}
-        echo "setenv PATH \${FOCUS_ROOT}/bin:\${PATH}" >> ${envfile}
-        echo "setenv PATH \${FOCUS_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
-        echo "setenv PATH \${FOCUS_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
-        echo "setenv PYTHONPATH \${FOCUS_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
+        echo "setenv A4D_ROOT ${PREFIX}" >> ${envfile}
+        echo "setenv PATH \${A4D_ROOT}/bin:\${PATH}" >> ${envfile}
+        echo "setenv PATH \${A4D_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
+        echo "setenv PATH \${A4D_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
+        echo "setenv PYTHONPATH \${A4D_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
     fi
 fi
+
+if [ -e ~/.zprofile ];
+  then
+    envfile=~/.zprofile
+    if ! grep "# Added by 4d on" ${envfile} >& /dev/null ;
+      then
+        echo "Adding environment variables to ${envfile}"
+        echo -e "\n">> ${envfile}
+        echo "# Added by 4d on `date`:" >> ${envfile}
+        echo "# (makes standalone programs and Python modules available)" >> ${envfile}
+        echo "export A4D_ROOT=${PREFIX}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/kernel/mrc/bin:\${PATH}" >> ${envfile}
+        echo "export PATH=\${A4D_ROOT}/scripts/proc:\${PATH}" >> ${envfile}
+        echo "export PYTHONPATH=\${A4D_ROOT}/scripts/proc:\${PYTHONPATH}" >> ${envfile}
+    fi
+fi
+
+
 echo "Done!"
 exit 0

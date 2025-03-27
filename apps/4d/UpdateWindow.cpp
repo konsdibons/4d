@@ -45,7 +45,7 @@ UpdateWindow::UpdateWindow(QWidget *parent)
 
     QVBoxLayout *layout = new QVBoxLayout(this);
 
-    updateTitle = new QLabel("Focus Version Information");
+    updateTitle = new QLabel("4d Version Information");
     QFont font = updateTitle->font();
     font.setBold(true);
     font.setPointSize(18);
@@ -130,7 +130,7 @@ void UpdateWindow::updateTextBox() {
         setWarningPalette(versionInfo);
         upgradeButton->show();
         if (remindUpdate != currentVersion) {
-            int choice = QMessageBox::question(this, tr("New version available"), tr("A new version of Focus is available. <br> Would you like to upgrade?"), tr("Tell Me More"), tr("Skip this version"), tr("Not now"));
+            int choice = QMessageBox::question(this, tr("New version available"), tr("A new version of 4d is available. <br> Would you like to upgrade?"), tr("Tell Me More"), tr("Skip this version"), tr("Not now"));
             if (choice == 0) show();
             if (choice == 1) UserPreferences().setRemindUpdate(currentVersion);
         }
