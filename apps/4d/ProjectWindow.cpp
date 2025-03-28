@@ -23,7 +23,8 @@ ProjectWindow::ProjectWindow(QWidget* parent)
     ImageConfigChanger* configChanger = new ImageConfigChanger(this);
     
     QStringList subdirs = ScriptModuleProperties(ApplicationData::scriptsDir().canonicalPath() + "/project").subfolders();
-    // qDebug() << "Here: subdirs = " << subdirs << endl;
+    // qDebug() << "Here1: scriptsDir = " << ApplicationData::scriptsDir().canonicalPath() + "/project" << endl;
+    // qDebug() << "Here1: subdirs = " << subdirs << endl;
     ExecutionWindow* exeWindow = new ExecutionWindow(subdirs);
     
     QTabWidget* tabWidget = new QTabWidget();

@@ -220,6 +220,21 @@ then
     \ln -s ${SRC}/scripts/proc  .
     ls -ld proc 
   fi
+  #     
+  ls -ld project
+  if [ -h project ];
+  then  
+    echo "scripts/project link already existing."
+  else
+    echo "Removing project directory in local ${PREFIX}/scripts"
+    \rm -rf project
+  fi    
+  if [ ! -h project ];
+  then  
+    echo "Replacing with link to svn-repository"
+    \ln -s ${SRC}/scripts/project .
+    ls -ld project
+  fi
   #
   # echo "done."
 fi

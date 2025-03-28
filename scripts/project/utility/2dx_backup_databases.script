@@ -1,0 +1,157 @@
+#!/bin/tcsh -ef
+#############################################################################
+#                                                                           #
+# Title: Backup or Restore Databases                                        #
+#                                                                           #
+# (C) 2dx.org, GNU Plublic License.                                         #
+#                                                                           #
+# Created..........: 10/01/2011                                             #
+# Last Modification: 10/01/2011                                             #
+# Author...........: 2dx.org                                                #
+#                                                                           #
+#############################################################################
+#
+# SORTORDER: 30
+#
+# MANUAL: This script can be used to backup or restore all 2dx_image.cfg databases.
+#
+# RESET: backup_sure = "no"
+# DISPLAY: backup_all_files
+# DISPLAY: backup_database_direction
+# DISPLAY: backup_database_comment_1
+# DISPLAY: backup_database_comment_2
+# DISPLAY: backup_database_comment_3
+#
+#$end_local_vars
+#
+# This defines some variables that we might need:
+set proc_2dx = ""
+set bin_2dx = ""
+#
+set backup_sure = ""
+set backup_all_files = ""
+set backup_database_direction = ""
+#
+#$end_vars
+#
+# This sets the scriptname variable:
+set scriptname = 2dx_backup_databases
+#
+# This removes the old logfile, so that a new fresh one can be created:
+\rm -f LOGS/${scriptname}.results
+#
+# This initializes the ccp4 environment, and other variables.
+set ccp4_setup = 'y'
+source ${proc_2dx}/initialize
+#
+# This advances the progress bar to the 1% position:
+echo "<<@progress: 1>>"
+#
+# This creates all needed subdirectories in the current merge directory, in case they are missing:
+source ${proc_2dx}/2dx_makedirs 
+#
+if ( ${backup_sure} == "no" ) then
+  ${proc_2dx}/protest "Not running (Are you sure is 'no')."
+endif
+#
+if ( ${backup_database_direction} == "0" ) then
+  set source = 2dx_image.cfg
+  set target = 2dx_image.cfg-backup1
+  set do_eval = 0
+endif
+if ( ${backup_database_direction} == "1" ) then
+  set source = 2dx_image.cfg
+  set target = 2dx_image.cfg-backup2
+  set do_eval = 0
+endif
+if ( ${backup_database_direction} == "2" ) then
+  set source = 2dx_image.cfg
+  set target = 2dx_image.cfg-backup3
+  set do_eval = 0
+endif
+if ( ${backup_database_direction} == "3" ) then
+  set source = 2dx_image.cfg-backup1
+  set target = 2dx_image.cfg
+  set do_eval = 1
+endif
+if ( ${backup_database_direction} == "4" ) then
+  set source = 2dx_image.cfg-backup2
+  set target = 2dx_image.cfg
+  set do_eval = 1
+endif
+if ( ${backup_database_direction} == "5" ) then
+  set source = 2dx_image.cfg-backup3
+  set target = 2dx_image.cfg
+  set do_eval = 1
+endif
+if ( ${backup_database_direction} == "6" ) then
+  set source = 2dx_image.cfg-backup4
+  set target = 2dx_image.cfg
+  set do_eval = 1
+endif
+#
+# This memorizes the current merge directory under the variable "olddir":
+set olddir = $PWD
+cd ..
+set rootdir = $PWD
+#
+if ( ${backup_all_files} == "0" ) then
+  cd ${rootdir}
+  find . -name 2dx_image.cfg -print | sed 's/\/2dx_image.cfg//' > ${olddir}/SCRATCH/2dx_merge_alldirs.dat
+  cd ${olddir}
+else
+  cd ${olddir}
+  cp 2dx_merge_dirfile.dat ${olddir}/SCRATCH/2dx_merge_alldirs.dat
+endif
+#
+set dirnum = `cat SCRATCH/2dx_merge_alldirs.dat | wc -l`
+echo ": Will work on ${dirnum} image directories."
+set increment = `echo ${dirnum} | awk '{ s = 80.0 / ( $1 + 1 ) } END { print s }'`
+set curval = 10.0
+#
+set dircounter = ${dirnum}
+set irun = 1
+while ( ${dircounter} > 0 )
+  #
+  ${bin_2dx}/2dx_getline.exe << eot > TMP.tmp
+${olddir}/SCRATCH/2dx_merge_alldirs.dat
+${dircounter}
+eot
+  #
+  set from_dir = `cat TMP.tmp`
+  \rm TMP.tmp
+  #
+  echo "::Working on ${from_dir}"
+  cd ${rootdir}
+  cd ${from_dir}
+  #
+  if ( -e ${source} ) then
+    echo "::                                              Copy ${source} to ${target}"
+    \cp -f ${source} ${target}
+    #
+    # Following tells GUI that the parameters for image have been changed and the GUI should reload them.
+    echo "<RESETDIR="\"${from_dir}\"">" >> ${olddir}/LOGS/${scriptname}.results
+    #
+  else
+    ${proc_2dx}/linblock "WARNING: ${source} does not exist here."
+  endif
+  #
+  set progress = `echo ${irun} ${dirnum} | awk '{ s = 10 + int( 80 * $1 / $2 ) } END { print s }'` 
+  echo "<<@progress:${progress}>>"
+  #
+  @ irun += 1
+  @ dircounter -= 1
+  cd ${olddir}
+end
+#
+echo "set backup_sure = no" >> LOGS/${scriptname}.results
+#
+# Move the progress bar to 100%:
+echo "<<@progress: 100>>"
+if ( ${do_eval} == "1" ) then
+  echo "<<@evaluate>>"
+endif
+#
+# Leave a message on the logfile that the script finished:
+${proc_2dx}/linblock "${scriptname} finished correctly."
+#
