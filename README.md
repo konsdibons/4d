@@ -1,4 +1,8 @@
 # Welcome to 4d
+<p align="center">
+  <img src="./apps/4d/icons/IconAssets.iconset/icon_512.png" width="400">
+</p>
+
 ## 4d is a program for the processing of 4D-STEM data.
 This is a collaborative project between the labs of Carsten Sachse, ER-C Jülich, Knut Müller-Caspary, LMU Munich, and Henning Stahlberg, EPFL Lausanne. 4d has inherited code from the focus-em.org project.
 
