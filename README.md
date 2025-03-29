@@ -27,9 +27,7 @@ The GUI is written in c++ with c++11 standards and requires a corresponding comp
 <ins>For MacOS</ins>, one would probably need to install packages like gcc using homebrew or macports. This could be done with “brew install gcc ; brew link gcc”. If done so, the following should be added to path:
 > /usr/local/bin:/opt/bin:/opt/local/bin:/usr/bin/:/usr/sbin
 
-Make sure that the gcc/g++ from the clang is not used to build otherwise it will fail. 
-
-On OSX, you might have to do 
+Make sure that the gcc/g++ from the clang is not used to build otherwise it will fail. For example, something like this might be needed:
 > cd /opt/homebrew/bin ; \ln -s g++-14 g++ ; \ln -s gcc-14 gcc
 
 ### libfftw3
@@ -44,7 +42,8 @@ This program requires fftw version 3.0.0 or later. The package is called libfftw
 ### Qt5
 Compilations of Qt5 is included in all the package managers we listed above. Qt5 can also be downloaded and installed from: http://www.qt.io/download-open-source/
 You also need the “qtscript5-dev - Qt 5 script development files”, which are not installed by default with Qt5. Installing the qtscript5-dev is also needed.
-On Linux, the command
+<ins>On Linux:</ins>
+The command
 > sudo apt-get install qtscript5-dev
 
 solves that problem.
@@ -55,7 +54,9 @@ gives you correct path to installed Qt libraries.
 
 NOTE: Building with Qt versions >= 5.7 will require a CMake version >= 3.1.0.
 
-NOTE for Mac OSX Users: Qt Version 5.9.4 worked fine, while Qt Version 5.10.1 caused the error: “build/apps/src/data/moc_ParameterConfiguration.cpp:175:63: error: 'init_priority' attribute is not supported on this platform.”
+<ins>Mac OSX:</ins> 
+You can install Qt with 
+> brew install qt5
 
 ### Compiling 4d
 Once everything is set up, CMAKE will automatically find the required paths and compile. This all has been scripted and 4d can  be compiled by running the build_all script, which take between zero and two arguments. The list below shows you all the possibilities:
