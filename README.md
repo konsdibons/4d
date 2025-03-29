@@ -42,21 +42,19 @@ This program requires fftw version 3.0.0 or later. The package is called libfftw
 ### Qt5
 Compilations of Qt5 is included in all the package managers we listed above. Qt5 can also be downloaded and installed from: http://www.qt.io/download-open-source/
 You also need the “qtscript5-dev - Qt 5 script development files”, which are not installed by default with Qt5. Installing the qtscript5-dev is also needed.
+
 <ins>On Linux:</ins>
-The command
 > sudo apt-get install qtscript5-dev
 
-solves that problem.
+<ins>Mac OSX:</ins> 
+> brew install qt5
+
 Make sure that after the installation you add Qt5 bin directory to the environment variable $PATH, and that:
 > qmake -query
 
 gives you correct path to installed Qt libraries.
 
 NOTE: Building with Qt versions >= 5.7 will require a CMake version >= 3.1.0.
-
-<ins>Mac OSX:</ins> 
-You can install Qt with 
-> brew install qt5
 
 ### Compiling 4d
 Once everything is set up, CMAKE will automatically find the required paths and compile. This all has been scripted and 4d can  be compiled by running the build_all script, which take between zero and two arguments. The list below shows you all the possibilities:
@@ -79,8 +77,13 @@ CSH is a Unix shell and a scripting language widely used in the electron microsc
 ### gawk
 
 gawk is a more powerful version of the command-line utility awk. 
-- Install gawk on OSX with "brew install gawk". 
-- On Linux, try “sudo apt-get install gawk”.
+
+<ins>On Linux:</ins>
+> sudo apt-get install gawk
+
+<ins>On Mac OSX:</ins>
+> brew install gawk
+
 
 ### Python and PILLOW
 
@@ -88,7 +91,16 @@ Many utilities and specific-purpose tools used by 4d are written in the Python s
 
 You also need **pip** and the module **pil** (or pillow).
 
-On OSX, try
+<ins>On Linux:</ins>
+> apt-get install python2.7 (or yum install python2.7)
+
+> apt-get install python3
+
+> pip3 install pillow
+
+> pip3 install matplotlib
+
+<ins>On Mac OSX:<ins>
 
 > xcode-select --install
 
@@ -99,14 +111,6 @@ On OSX, try
 or alternatively:
 > pip install pillow
 
-On Linux, try:
-> apt-get install python2.7 (or yum install python2.7)
-
-> apt-get install python3
-
-> pip3 install pillow
-
-> pip3 install matplotlib
 
 and make sure in the Preferences panel of 4d, that 4d is using this python2.7 binary, which may reside in /usr/local/bin/python2.7
 
