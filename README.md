@@ -102,6 +102,8 @@ You also need **pip** and the module **pil** (or pillow).
 
 > brew install --cask anaconda
 
+(after this, you may have to add /opt/homebrew/anaconda3/bin to your PATH in ~/.zprofile)
+
 ### Python extensions pillow and mathplotlib
 Many utilities and specific-purpose tools used by 4d are written in the Python scripting language (version 2.7.x). We recommend using a scientific Python installation like Anaconda or Canopy. You can also use the EMAN2.2 Python environment based on Anaconda (see below).
 
