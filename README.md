@@ -85,7 +85,7 @@ gawk is a more powerful version of the command-line utility awk.
 > brew install gawk
 
 
-### Python and PILLOW
+### Python with pillow, mathplotlib and numpy
 
 Many utilities and specific-purpose tools used by 4d are written in the Python scripting language (version 2.7.x). We recommend using a scientific Python installation like Anaconda or Canopy. You can also use the EMAN2.2 Python environment based on Anaconda (see below).
 
@@ -104,25 +104,26 @@ You also need **pip** and the module **pil** (or pillow).
 
 > xcode-select --install
 
-> brew install python2.7
+> brew install python
 
-> pip3 install pillow
+> brew install pillow
+
+> brew install python-mathplotlib
 
 or alternatively:
 > pip install pillow
 
-
-and make sure in the Preferences panel of 4d, that 4d is using this python2.7 binary, which may reside in /usr/local/bin/python2.7
-
-Or to install those in python2.7:
-
-> /usr/bin/python -mpip install -U pillow
-
-> /usr/bin/python -mpip install -U matplotlib
+and make sure in the Preferences panel of 4d, that 4d is using this python binary, which may reside in /usr/homebrew/bin/python
 
 ### NumExpr
 For accelerating some heavy calculations in Python scripts, 4d uses the NumExpr evaluator. You can install numexpr in your Python environment with the following pip command:
+
+<ins>On Linux:</ins>
 > pip install numexpr
+
+<ins>On Mac OSX:</ins>
+> brew install numpy
+
 
 ## The following external software tools are optional
 The following softwares are helpful for specific tasks. You need to install them, if you want to make use of them in your scripts.
