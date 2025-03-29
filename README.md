@@ -133,6 +133,15 @@ For accelerating some heavy calculations in Python scripts, 4d uses the NumExpr 
 <ins>On Mac OSX:</ins>
 > brew install numpy
 
+### h5py
+h5py is a python package to interface with the HDF5 format. It is described at https://docs.h5py.org/en . To install it:
+
+<ins>On Linux:</ins>
+> pip install h5py
+
+<ins>On Mac OSX:</ins>
+> brew install h5py
+
 
 ## The following external software tools are optional
 The following softwares are helpful for specific tasks. You need to install them, if you want to make use of them in your scripts.
