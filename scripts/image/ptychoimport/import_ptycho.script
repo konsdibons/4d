@@ -128,21 +128,6 @@ endif
 #
 echo "<<@progress: 10>>"
 #
-if ( ${CS} == "ScriptWillPutNumberHere" ) then
-  set CS = ${Default_CS}
-  echo "set CS = ${CS}" >> LOGS/${scriptname}.results
-endif
-#
-if ( ${KV} == "ScriptWillPutNumberHere" ) then
-  set KV = ${Default_KV}
-  echo "set KV = ${KV}" >> LOGS/${scriptname}.results
-endif
-#
-if ( ${defocus_phase_shift_doit} == "-" ) then
-  set defocus_phase_shift_doit = ${Default_phase_shift_doit}
-  echo "set defocus_phase_shift_doit = ${defocus_phase_shift_doit}" >> LOGS/${scriptname}.results
-endif
-#
 if(${import_original_time} == "-" || ${import_original_time} == "") then
   @ status_date = `date +%s` * 1000
   set date_text = "Processed at "`echo ${status_date} | awk '{ s = $1 / 1000 } END { print s }' | gawk '{print strftime("%c", $0)}' `
@@ -183,8 +168,18 @@ if ( ${import_rawstack_type} == 4 ) then
   echo "# IMAGE: ${vacuum_probe} <Vacuum Probe (npy)>" >> LOGS/${scriptname}.results
   echo "# IMAGE: ${vacuum_probe_original} <Vacuum Probe Original (npy)>" >> LOGS/${scriptname}.results
   #
-  exit 
+  ##########################################################################
+  ${proc_2dx}/linblock "Running ${proc_2dx}/ptycho_Single.py"
+  ##########################################################################
+  #
+  echo "<<@progress: 20>>"
+  #
+  ${app_anaconda} ${proc_2dx}/4d_import.py ${import_rawstack} ${import_rawstack}.mrcs
+  #
+  echo "<<@progress: 90>>"
+  #
 endif
+#
 
 
 

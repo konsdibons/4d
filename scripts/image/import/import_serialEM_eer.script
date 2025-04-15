@@ -119,8 +119,6 @@ source ${proc_2dx}/initialize
 #
 source ${proc_2dx}/2dx_makedirs
 #
-source ${proc_2dx}/2dx_makedirs
-#
 set import_produce_gainref2D = "y"
 set import_produce_gainref2Dfft = "y"
 #
